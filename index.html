@@ -302,6 +302,9 @@ button.card:active,.cat:active,.btg:active,.pbtn:active,.chip:active{transform:s
 .srch .in input{flex:1;background:none;border:0;outline:none;font-size:14.5px;min-width:0}
 .srch .in input::placeholder{color:var(--w50)}
 .srch .icb{width:48px;height:48px}
+.card.first.digest{margin-top:12px}.digest{display:block;width:calc(100% - 24px);text-align:left}.digest .go{display:inline-flex;align-items:center;gap:2px;color:var(--blue-soft)}.digest .go .ic{width:14px;height:14px}
+.dsum{font-family:var(--disp);font-weight:500;font-size:40px;letter-spacing:-.05em;line-height:1;margin:10px 0 6px}.dsum small{font-size:22px;color:var(--w50)}.dsum.z{color:var(--w30)}
+.sec .cnt{font-style:normal;color:var(--alert);margin-left:4px}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 12px 0}
 .kpi{border-radius:18px;padding:12px}
 .kpi b{display:block;font-family:var(--disp);font-weight:500;font-size:22px;letter-spacing:-.04em}
@@ -708,17 +711,18 @@ function todayHTML(){
  const w=work(), flagged=[]; w.forEach(r=>flagsOf(r).forEach(f=>flagged.push([f,r])));
  const groups={}; flagged.forEach(([f,r])=>(groups[f]=groups[f]||[]).push(r));
  const inWork=w.filter(r=>r.pay_status==='paid'&&!isDone(r)&&!r.cancelled).length;
- const paidToday=w.filter(r=>r.paid_at&&D(r.paid_at)>=today0()).length;
+ const paidT=DB.orders.filter(r=>r.paid_at&&D(r.paid_at)>=today0()), paidSum=paidT.reduce((s,r)=>s+total(r),0);
+ const changes=DB.hist.filter(h=>D(h.at)>=today0()).length;
  const stCount=(s)=>w.filter(r=>!r.cancelled&&(s<0?(r.pay_status==='unpaid'||r.pay_status==='checking'):(r.pay_status==='paid'&&r.stage===s))).length;
  const pipe=[['Ждут оплаты',-1],...STAGES.slice(0,7).map((s,i)=>[s.t,i])].map(([t,s])=>[t,s,stCount(s)]);
  const mx=Math.max(1,...pipe.map(p=>p[2]));
  return `<div class="mtop"><span class="ava m">А</span><div class="ttl">${new Date().toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'})}<b>Анна · менеджер</b></div><button class="r icb" type="button" data-sync aria-label="Обновить">${I('chev')}</button></div>
  ${mSearch('Номер, ФИО, телефон, трек')}
- <div class="kpis"><div class="kpi surf"><b>${inWork}</b><span>в работе</span></div><div class="kpi surf"><b>${paidToday}</b><span>оплачено сегодня</span></div><div class="kpi surf"><b>${flagged.length}</b><span><i class="sd ${flagged.length?'alert':'ok'}"></i>${flagged.length?'требуют действия':'всё в порядке'}</span></div></div>
- <div class="sec"><span>Требует действия</span><span>${flagged.length?'по важности':''}</span></div>
+ <button class="card first surf digest" type="button" data-digest><div class="pl"><span>Оплачено сегодня</span><span class="go">${paidT.length?paidT.length+' '+plural(paidT.length,'оплата','оплаты','оплат'):'пока нет'}${I('chev')}</span></div><div class="dsum${paidT.length?'':' z'}">${money(paidSum).replace(' ₽','')} <small>₽</small></div><div class="sm">${changes} ${plural(changes,'изменение','изменения','изменений')} по заказам за день</div></button>
+ <div class="sec"><span>Требует действия${flagged.length?` <em class="cnt">${flagged.length}</em>`:''}</span><span>${flagged.length?'по важности':''}</span></div>
  ${flagged.length?Object.keys(FLAGS).filter(f=>groups[f]).map(f=>`<div class="grp surf"><div class="gh"><i style="background:${FLAGS[f].c}"></i>${FLAGS[f].t}<em style="color:${FLAGS[f].c}">${groups[f].length}</em></div>${groups[f].map(r=>`<div class="prow"><button class="tx" type="button" data-mopen="${r.id}" style="text-align:left"><b>${r.no} · ${esc(r.client_name||'')}</b><span>${esc(FLAGS[f].why(r))}</span></button><button class="act" type="button" data-fix="${f}:${r.id}">${FLAGS[f].act}</button></div>`).join('')}</div>`).join('')
   :`<div class="card surf" style="text-align:center;padding:26px 16px"><div class="pv">Всё под контролем</div><div class="sm">Новых проблем нет.</div></div>`}
- <div class="sec"><span>Все заказы по этапам</span><span>${w.filter(r=>!r.cancelled&&r.pay_status!=='draft'&&!isDone(r)).length} в работе</span></div>
+ <div class="sec"><span>Все заказы по этапам</span><span>${inWork} в работе · ${stCount(-1)} ждут оплаты</span></div>
  <div class="list surf pipe">${pipe.map(([t,s,n])=>`<button class="pr" type="button" data-pipe="${s}"><span class="pt">${t}</span><b>${n}</b><span class="pb"><i style="width:${Math.round(n/mx*100)}%"></i></span></button>`).join('')}</div>
  <div class="sec"><span>Последние изменения</span><button type="button" data-mtab="morders" class="seclink">ВСЕ</button></div>
  <div class="list surf">${w.slice(0,4).map(ordRow).join('')}</div>`;
@@ -782,10 +786,11 @@ function mnewHTML(){
  <div class="tag">Для ссылки на оплату нужны: товары и сумма · для отправки: ФИО, телефон, доставка</div>`;
 }
 function mlinksHTML(){
- const w=work().filter(r=>r.pay_status!=='draft').sort((a,b)=>a.updated_at<b.updated_at?1:-1);
+ const tod=st.lf==='today'; const w=work().filter(r=>r.pay_status!=='draft'&&(!tod||(r.paid_at&&D(r.paid_at)>=today0()))).sort((a,b)=>a.updated_at<b.updated_at?1:-1);
  const lbl=(r)=>r.pay_status==='paid'?['Оплачена','#7BE5AC']:r.pay_status==='checking'?['Банк подтверждает','var(--blue-soft)']:r.pay_status==='refund'?['Возврат','var(--w50)']:['Отправлена, не оплачена','var(--warn)'];
  return `<div class="ptitle" style="margin-top:28px">Ссылки</div><div class="psub">Ссылки на оплату и их статус. На стенде оплата тестовая.</div>
- <div class="sec"><span>Все ссылки</span><span>${w.length}</span></div>
+ <div class="chips" style="margin-top:12px"><button class="chip" type="button" data-lf="all" aria-pressed="${!tod}">Все</button><button class="chip" type="button" data-lf="today" aria-pressed="${tod}">Оплачено сегодня</button></div>
+ <div class="sec"><span>${tod?'Оплачено сегодня':'Все ссылки'}</span><span>${tod?money(w.reduce((s,r)=>s+total(r),0)):w.length}</span></div>
  <div class="list surf">${w.map(r=>`<button class="row" type="button" data-mopen="${r.id}"><span class="tx"><b>${r.no} · ${esc(r.client_name||'')}</b><span>${ago(r.updated_at)}</span></span><span class="r">${money(total(r))}<small style="color:${lbl(r)[1]}">${lbl(r)[0]}</small></span></button>`).join('')}</div>`;
 }
 function mmoreHTML(){
@@ -877,7 +882,7 @@ function refresh(){ const sc=$('#vp .screen:not(.gone)'); if(!sc) return; const 
 const cur = () => st.stack[st.stack.length-1];
 function push(v){ st.stack.push(v); mount(v,'fwd'); haptic('light'); }
 function back(){ if(sheetOpen()) return closeSheet(); if(st.stack.length<=1) return; st.stack.pop(); mount(cur(),'back'); haptic('light'); }
-function setTab(t,ctx){ if(sheetOpen()) closeSheet(); if(t!=='morders') st.msel=null; if(t==='morders'&&!st.mfKeep){ st.mf='all'; st.msel=null; } st.mfKeep=false; st.tab=t; if(t==='chat') st.ctx=ctx||null; st.stack=[{v:t}]; mount(cur()); haptic('sel'); renderTabs(); }
+function setTab(t,ctx){ if(sheetOpen()) closeSheet(); if(t!=='morders') st.msel=null; if(t==='morders'&&!st.mfKeep){ st.mf='all'; st.msel=null; } st.mfKeep=false; if(!st.lfKeep) st.lf=null; st.lfKeep=false; st.tab=t; if(t==='chat') st.ctx=ctx||null; st.stack=[{v:t}]; mount(cur()); haptic('sel'); renderTabs(); }
 function renderTabs(){ const fl=st.role==='manager'?work().some(r=>flagsOf(r).length):false; $('#tabs').innerHTML=ROOT[st.role].map(t=>`<button type="button" data-tab="${t[0]}" ${st.tab===t[0]?'aria-current="page"':''}>${I(t[2])}${t[1]}${t[0]==='mtoday'&&fl?'<i class="dotn"></i>':''}</button>`).join(''); }
 let mainAction=null;
 function mainFor(v){ if(sheetOpen()) return null;
@@ -954,6 +959,8 @@ document.addEventListener('click',(e)=>{
  if(d.paygo){ const id=d.paygo; closeSheet(); toast('Тестовая оплата: банк подтверждает');
   return act(async()=>{ await patchOrder(id,{pay_status:'checking'}); await load(); refresh(); await new Promise(r=>setTimeout(r,2600)); await patchOrder(id,{pay_status:'paid',paid_at:new Date().toISOString()}); await addHist(id,'оплата подтверждена (тестовая)',{who:'Система',notified:true}); st.stack=[{v:'paid',k:id}]; await load(); mount(cur(),'fwd'); }); }
  /* менеджер */
+ if(d.digest!==undefined){ st.lf='today'; st.lfKeep=true; return setTab('mlinks'); }
+ if(d.lf){ st.lf=d.lf==='today'?'today':null; haptic('sel'); return refresh(); }
  if(d.sync!==undefined) return sync(()=>{ refresh(); toast('Обновлено'); });
  if(d.mf){ st.mf=d.mf; haptic('sel'); return refresh(); }
  if(d.pipe!==undefined){ st.mf= +d.pipe<0?'unpaid':'st:'+d.pipe; st.mfKeep=true; return setTab('morders'); }
