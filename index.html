@@ -358,6 +358,12 @@ button.card:active,.cat:active,.btg:active,.pbtn:active,.chip:active{transform:s
 .hi .t{color:var(--w50);font-size:12px}
 .hi b{font-weight:500}
 .hi span{color:var(--w50)}
+.th.ph{background:#fff;overflow:visible;padding:0}.th.ph img{width:100%;height:100%;object-fit:contain;border-radius:var(--r-in);padding:4px;box-sizing:border-box}
+.ith{width:44px;height:44px;flex:none;border-radius:10px;background:#fff;object-fit:contain;padding:4px;box-sizing:border-box}
+.dl.it{justify-content:flex-start;align-items:flex-start}.dl.it>span{flex:1;color:#fff;font-size:14px}.dl.it small{display:block;color:var(--w50);font-size:12.5px;margin-top:2px}.dl.it .ic2{color:var(--w70);font-style:italic}.dl.it>b{white-space:nowrap}
+.lnk2{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:12.5px;color:var(--blue-soft)}.lnk2 .ic{width:13px;height:13px}
+.pos .pmain{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;min-width:0}.pos .del{color:var(--w30);margin-left:6px;vertical-align:-3px}.pos .del .ic{width:16px;height:16px}.pos:has(.ith){grid-template-columns:44px 1fr auto;align-items:center}
+.stico{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;display:grid;place-items:center;margin:56px 18px 0}.stico .ic{width:30px;height:30px}
 .pos{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 0;border-top:1px solid var(--line)}
 .pos:first-child{border:0}
 .pos b{font-weight:500;font-size:14.5px}.pos small{color:var(--w50);font-size:12.5px}
@@ -417,7 +423,7 @@ button.card:active,.cat:active,.btg:active,.pbtn:active,.chip:active{transform:s
  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/></symbol>
  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></symbol>
- <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 7.5v5.5M12 16.5v.5"/><circle cx="12" cy="12" r="8.5"/></symbol>
+ <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5h9a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 6.6 11 3.75 3.75 0 0 0 7.5 18.5z"/><path d="M4 4l16 16"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 7.5v5.5M12 16.5v.5"/><circle cx="12" cy="12" r="8.5"/></symbol>
  <symbol id="i-box" viewBox="0 0 24 24"><path d="M4.5 8 12 4.5 19.5 8v8L12 19.5 4.5 16V8Z"/><path d="M4.5 8 12 11.5 19.5 8M12 11.5v8"/></symbol>
  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3.5 6.5h10v9h-10zM13.5 9.5h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></symbol>
 </svg>
@@ -503,6 +509,8 @@ const QUICK = ['Где сейчас заказ?','Можно быстрее?','�
 const BGS = {light:'Свет',satin:'Сатин',ribbon:'Стекло'};
 const NOTIF = [['Оплата получена','Оплата получена, заказ {no} в работе. Выкупим в США в ближайшие дни.'],['Новый этап','Заказ {no}: новый этап «{stage}». Ожидаемый срок — {eta}.'],['Срок изменился','Срок поставки заказа {no} изменился: {eta} (было {old}). Причина: {reason}.'],['Появился трек','По заказу {no} появился трек СДЭК: {track}.'],['Можно забирать','Заказ {no} ждёт вас в пункте СДЭК до {until}.'],['Заказ отменён','Заказ {no} отменён. {refund}']];
 const ICONS = [[/playstation|xbox|switch|dualsense|nintendo/i,'game'],[/iphone|чехол|watch/i,'phone'],[/airpods|наушник/i,'pods'],[/dyson|airwrap/i,'vac'],[/macbook|ноутбук|ipad/i,'lap'],[/gopro|sony|камер|dji|insta/i,'cam']];
+const thumb = (items) => { const ph=(items[0]||{}).ph; return ph ? `<span class="th ph"><img src="${esc(ph)}" alt="" loading="lazy" decoding="async">` : `<span class="th">${I(iconFor(items))}`; };
+const itemRow = (i) => `<div class="dl it">${i.ph?`<img class="ith" src="${esc(i.ph)}" alt="" loading="lazy">`:''}<span>${esc(i.n)}<small>${esc(i.s||'')}${i.s?' · ':''}${i.q} шт. × ${money(i.p)}${i.sku?' · арт. '+esc(i.sku):''}</small>${i.c?`<small class="ic2">${esc(i.c)}</small>`:''}${i.url?`<button class="lnk2" type="button" data-ext="${esc(i.url)}">Товар в магазине${I('ext')}</button>`:''}</span><b>${money(i.p*i.q)}</b></div>`;
 const iconFor = (items) => { const n=(items[0]||{}).n||''; for(const [re,ic] of ICONS) if(re.test(n)) return ic; return 'box'; };
 
 /* ================= ДАТЫ ================= */
@@ -586,7 +594,7 @@ function rowFor(r){ let rr, sub;
  else if(r.stage<0){ rr=`<div class="r">${etaShort(r)}</div>`; sub='<i class="sd ok"></i>Оплачен · выкупаем в США'; }
  else if(r.stage===6){ rr=`<div class="r">${etaShort(r)}<small style="color:#7BE5AC">Забрать</small></div>`; sub='<i class="sd ok"></i>Можно забирать'; }
  else { rr=`<div class="r">${etaShort(r)}</div>`; sub=`<i class="sd ${isDelay(r)?'alert':'ok'}"></i>${isDelay(r)?'Срок перенесён':where(r)}`; }
- return `<button class="row" type="button" data-open="${r.id}"><span class="th">${I(iconFor(r.items||[]))}${(r.items||[]).length>1?`<em>${r.items.length}</em>`:''}</span><span class="tx"><b>${esc(title(r))}</b><span>${sub}</span></span>${rr}</button>`; }
+ return `<button class="row" type="button" data-open="${r.id}">${thumb(r.items||[])}${(r.items||[]).length>1?`<em>${r.items.length}</em>`:''}</span><span class="tx"><b>${esc(title(r))}</b><span>${sub}</span></span>${rr}</button>`; }
 
 function homeHTML(){
  const mine=myOrders(), r=heroOf(mine);
@@ -645,8 +653,8 @@ function orderHTML(id){
  const payTxt = p==='paid'?'Оплачено полностью':p==='refund'?'Возврат оформлен':p==='checking'?'Проверяем оплату':'Ждёт оплаты';
  const items=r.items||[];
  h+=`<div class="list surf" style="margin-top:8px">
- <button class="row" type="button" data-acc="${id}:items" aria-expanded="${A('items')}"><span class="th">${I(iconFor(items))}${items.length>1?`<em>${items.length}</em>`:''}</span><span class="tx"><b>Состав</b><span>${esc(items.map(i=>short(i.n)).join(', '))}</span></span><span class="r">${money(total(r))}</span>${I('chev')}</button>
- ${A('items')?`<div class="accb">${items.map(i=>`<div class="dl"><span>${esc(i.n)}<small>${esc(i.s||'')} · ${i.q} шт.</small></span><b>${money(i.p*i.q)}</b></div>`).join('')}<div class="dl"><span>Доставка до СДЭК</span><b>${money(r.ship)}</b></div></div>`:''}
+ <button class="row" type="button" data-acc="${id}:items" aria-expanded="${A('items')}">${thumb(items)}${items.length>1?`<em>${items.length}</em>`:''}</span><span class="tx"><b>Состав</b><span>${esc(items.map(i=>short(i.n)).join(', '))}</span></span><span class="r">${money(total(r))}</span>${I('chev')}</button>
+ ${A('items')?`<div class="accb">${items.map(itemRow).join('')}<div class="dl"><span>Доставка до СДЭК</span><b>${money(r.ship)}</b></div></div>`:''}
  <button class="row" type="button" data-acc="${id}:pay" aria-expanded="${A('pay')}"><span class="th">${I('shield')}</span><span class="tx"><b>Оплата</b><span>${payTxt}</span></span>${I('chev')}</button>
  ${A('pay')?`<div class="accb"><div class="dl"><span>Итого</span><b>${money(total(r))}</b></div>${p==='paid'?`<div class="dl"><span>Оплачено ${r.paid_at?dd(D(r.paid_at)):''}</span><b>${money(total(r))}</b></div><div class="dl"><span>Чек</span><span>в чате бота</span></div>`:`<div class="dl"><span>К оплате</span><b>${money(total(r))}</b></div>`}</div>`:''}
  <button class="row" type="button" data-acc="${id}:deliv" aria-expanded="${A('deliv')}"><span class="th">${I('truck')}</span><span class="tx"><b>Доставка</b><span>${esc(dv.name||'не указана')} · ${esc(r.client_name||'')}</span></span>${I('chev')}</button>
@@ -668,7 +676,7 @@ function railHTML(r){
 function chatHTML(){
  const mine=myOrders(); const r = (st.ctx && DB.orders.find(x=>x.id===st.ctx)) || heroOf(mine);
  return `<div class="mhero"><span class="ava m on">А</span><h2>Анна</h2><p>Ваш менеджер · в сети<br>Отвечает в среднем за 10 минут, с 10 до 22</p></div>
- ${r?`<button class="card first surf" type="button" data-sheet="pickorder"><div class="mrow"><span class="th">${I(iconFor(r.items||[]))}</span><div class="tx"><span>Вопрос по заказу</span><b style="margin-top:2px">${esc(title(r))}</b></div><span style="font-size:12.5px;color:var(--blue-soft)">${r.no}</span></div></button>`:''}
+ ${r?`<button class="card first surf" type="button" data-sheet="pickorder"><div class="mrow">${thumb(r.items||[])}</span><div class="tx"><span>Вопрос по заказу</span><b style="margin-top:2px">${esc(title(r))}</b></div><span style="font-size:12.5px;color:var(--blue-soft)">${r.no}</span></div></button>`:''}
  <div class="sec" style="margin-bottom:0"><span>Быстрый вопрос</span><span></span></div>
  <div class="chips" role="group" aria-label="Быстрый вопрос">${QUICK.map(q=>`<button class="chip" type="button" data-topic="${q}" aria-pressed="${st.topic===q}">${q}</button>`).join('')}</div>
  <button class="pbtn" type="button" data-chat="${r?r.id:''}">${I('chat')}${st.topic?'Спросить: '+st.topic.replace('?',''):'Написать Анне'}</button>
@@ -741,11 +749,14 @@ function ordRow(r){
 }
 const MFILT = [['all','Все'],['unpaid','Ждут оплаты'],['transit','В пути'],['over','Просрочены'],['draft','Черновики']];
 function mFilter(f){ const w=work(); return w.filter(r=> f==='all'?(r.pay_status!=='draft') : f==='unpaid'?(r.pay_status==='unpaid'||r.pay_status==='checking') : f==='transit'?(r.pay_status==='paid'&&!isDone(r)&&!r.cancelled) : f==='over'?flagsOf(r).includes('over') : f==='draft'?r.pay_status==='draft' : f.startsWith('st:')?(r.pay_status==='paid'&&!r.cancelled&&r.stage===+f.slice(3)) : true); }
+const SORTS=[['upd','По изменению'],['new','По созданию'],['eta','По сроку']], PERIODS=[['all','За всё время'],['d1','Сегодня'],['d7','7 дней'],['d30','30 дней']];
+function sortList(list){ const ms=st.ms||'upd', mp=st.mp||'all'; const days={d1:0,d7:7,d30:30}[mp]; let l=list; if(days!==undefined){ const since=today0(); since.setDate(since.getDate()-days); l=l.filter(r=>D(r.created_at)>=since); }
+ const k=ms==='new'?(r)=>r.created_at:ms==='eta'?(r)=>r.eta_to||'9999':(r)=>r.updated_at; return [...l].sort((a,b)=> ms==='eta' ? (k(a)<k(b)?-1:1) : (k(a)<k(b)?1:-1)); }
 function mordersHTML(){
- const f=st.mf, list=mFilter(f), stg=f.startsWith('st:')?+f.slice(3):null, sel=st.msel, n=sel?sel.size:0;
+ const f=st.mf, list=sortList(mFilter(f)), stg=f.startsWith('st:')?+f.slice(3):null, sel=st.msel, n=sel?sel.size:0;
  return `<div class="ptitle" style="margin-top:28px">Заказы</div>${mSearch('Поиск по номеру, ФИО, телефону, треку')}
  <div class="chips" style="margin-top:12px">${stg!==null?`<button class="chip" type="button" aria-pressed="true" data-mf="all">${STAGES[stg].t} ✕</button>`:''}${MFILT.map(([k,t])=>`<button class="chip" type="button" data-mf="${k}" aria-pressed="${f===k}">${t}<b>${mFilter(k).length}</b></button>`).join('')}</div>
- <div class="sec"><span>${list.length} ${plural(list.length,'заказ','заказа','заказов')}</span><span style="display:flex;gap:14px"><button type="button" class="seclink" data-mselect>${sel?'ГОТОВО':'ВЫБРАТЬ'}</button></span></div>
+ <div class="sec"><span>${list.length} ${plural(list.length,'заказ','заказа','заказов')}</span><span style="display:flex;gap:14px"><button type="button" class="seclink" data-sheet="msort">${(SORTS.find(x=>x[0]===(st.ms||'upd'))||[])[1].toUpperCase()}${(st.mp||'all')!=='all'?' · '+(PERIODS.find(x=>x[0]===st.mp)||[])[1].toUpperCase():''}</button><button type="button" class="seclink" data-mselect>${sel?'ГОТОВО':'ВЫБРАТЬ'}</button></span></div>
  ${sel?`<div class="bulk glass"><span>${n?`Выбрано ${n}`:'Отметьте заказы'}</span><button type="button" class="act" data-sheet="mbulk" ${n?'':'disabled'}>Следующий этап</button></div>`:''}
  <div class="list surf">${list.length?list.map(ordRow).join(''):'<div class="sm" style="padding:18px 0;text-align:center">Здесь пусто</div>'}</div>`;
 }
@@ -758,6 +769,7 @@ function morderHTML(id){
  <div class="kick" style="margin-top:20px">${esc(r.client_name||'Без имени')} · ${esc(items.map(i=>i.n).join(', '))}</div>
  <div class="date amt" style="font-size:44px">${money(total(r)).replace(' ₽','')} <small>₽</small></div>
  <div class="st">${payPillM(r.pay_status)}<span class="pill">${stageTxt(r)}</span></div>
+ ${r.pay_status==='draft'?(()=>{ const miss=[!(r.items||[]).length&&'товары',...missingForSend(draftFrom(r))].filter(Boolean); return `<div class="grp surf" style="margin-top:16px"><div class="gh"><i style="background:var(--warn)"></i>Черновик</div><div class="prow"><div class="tx"><b>${miss.length?'Не хватает: '+miss.join(', '):'Всё заполнено'}</b><span>${miss.length?'нужно перед отправкой клиенту':'можно отправлять ссылку'}</span></div><button class="act" type="button" data-editord="${id}">${miss.length?'Заполнить':'Изменить'}</button></div></div>`; })():''}
  ${reqs.length?`<div class="grp surf" style="margin-top:16px"><div class="gh"><i style="background:var(--blue-soft)"></i>Вопрос клиента<em style="color:var(--blue-soft)">${reqs.length}</em></div>${reqs.map(q=>`<div class="prow"><div class="tx"><b>${esc(q.topic||'Вопрос')}</b><span style="white-space:normal">${esc(q.body||'')} · ${ago(q.at)}</span></div><button class="act" type="button" data-resolve="${q.id}">Решено</button></div>`).join('')}</div>`:''}
  <div class="mstat"><button class="card surf" type="button" data-sheet="meta" data-ctx="${id}"><div class="pl"><span>Срок</span><span style="color:var(--blue-soft)">изменить</span></div><div class="pv"${over?' style="color:var(--alert)"':''}>${r.eta_to?etaShort(r):'—'}</div></button>
  <button class="card surf" type="button" data-sheet="mtrack" data-ctx="${id}"><div class="pl"><span>Трек СДЭК</span><span style="color:var(--blue-soft)">${r.track?'изменить':'добавить'}</span></div><div class="pv"${!r.track&&r.stage>=6&&!isDone(r)?' style="color:var(--warn)"':''}>${r.track?esc(r.track):(r.stage>=6&&!isDone(r)?'нужен':'—')}</div></button></div>
@@ -765,7 +777,7 @@ function morderHTML(id){
  <button class="row" type="button" data-acc="${id}:cl" aria-expanded="${A('cl')}"><span class="th">${I('user')}</span><span class="tx"><b>${esc(r.client_name||'Клиент')}</b><span>${esc(r.client_phone||'')} · ${r.tg_user_id?'Telegram привязан':'не привязан'}</span></span>${I('chev')}</button>
  ${A('cl')?`<div class="accb"><div class="dl"><span>${esc(dv.type||'Доставка')}<small>${esc(dv.name||'')} · ${esc(dv.addr||'')}${dv.code?' · код '+esc(dv.code):''}</small></span></div><div class="dl"><span>Ссылка для клиента<small>${BOT_APP}?startapp=${r.bind_code}</small></span><button class="icb" type="button" data-copy="${BOT_APP}?startapp=${r.bind_code}" aria-label="Скопировать ссылку">${I('copy')}</button></div><div class="dl"><span>Код привязки</span><b>${r.bind_code}</b></div></div>`:''}
  <button class="row" type="button" data-acc="${id}:items" aria-expanded="${A('items')}"><span class="th">${I('list')}</span><span class="tx"><b>Товары · ${items.length}</b><span>${esc(items.map(i=>i.n).join(', '))}</span></span>${I('chev')}</button>
- ${A('items')?`<div class="accb">${items.map(i=>`<div class="dl"><span>${esc(i.n)}<small>${esc(i.s||'')} · ${i.q} шт.</small></span><b>${money(i.p*i.q)}</b></div>`).join('')}<div class="dl"><span>Доставка</span><b>${money(r.ship)}</b></div><div class="dl"><span style="color:var(--w30)">${r.pay_status==='paid'?'После оплаты изменения сохраняются в истории':'До оплаты состав можно менять'}</span></div></div>`:''}
+ ${A('items')?`<div class="accb">${items.map(itemRow).join('')}<div class="dl"><span>Доставка</span><b>${money(r.ship)}</b></div><div class="dl"><span style="color:var(--w30)">${r.pay_status==='paid'?'После оплаты изменения сохраняются в истории':'До оплаты состав можно менять'}</span></div></div>`:''}
  <button class="row" type="button" data-acc="${id}:pay" aria-expanded="${A('pay')}"><span class="th">${I('shield')}</span><span class="tx"><b>Оплата</b><span>${r.pay_status==='paid'?'Оплачено '+(r.paid_at?dd(D(r.paid_at)):''):r.pay_status==='draft'?'Ссылка не создана':r.pay_status==='checking'?'Банк подтверждает':'Ссылка отправлена, не оплачена'}</span></span>${I('chev')}</button>
  ${A('pay')?`<div class="accb"><div class="dl"><span>Сумма</span><b>${money(total(r))}</b></div>${r.pay_status==='unpaid'||r.pay_status==='checking'?`<div class="dl"><button class="num glass" type="button" data-markpaid="${id}">Отметить оплату (тест)</button></div>`:''}</div>`:''}
  <button class="row" type="button" data-sheet="mnote" data-ctx="${id}"><span class="th">${I('chat')}</span><span class="tx"><b>Комментарии</b><span>${r.comment_client?'клиенту: '+esc(r.comment_client):'клиенту и внутренняя заметка'}</span></span>${I('chev')}</button>
@@ -777,20 +789,21 @@ function morderHTML(id){
 function mnewHTML(){
  const o=st.newo;
  return `<button class="back" type="button" data-back>${I('back')}Назад</button>
- <div class="hd" style="margin-top:18px"><span style="font-size:12.5px;color:var(--w50)">Новый заказ</span><span class="r saved"><i></i>Черновик сохраняется</span></div>
- <div class="ptitle" style="margin-top:18px;font-size:38px">Новый<br>заказ</div>
+ <div class="hd" style="margin-top:18px"><span style="font-size:12.5px;color:var(--w50)">${o.editId?'Правка заказа '+esc((DB.orders.find(x=>x.id===o.editId)||{}).no||''):'Новый заказ'}</span>${o.editId?'':'<span class="r saved"><i></i>Черновик сохраняется</span>'}</div>
+ <div class="ptitle" style="margin-top:18px;font-size:38px">${o.editId?'Изменить<br>заказ':'Новый<br>заказ'}</div>
+ ${o.editId&&(DB.orders.find(x=>x.id===o.editId)||{}).pay_status==='paid'?'<div class="card surf"><div class="pv" style="font-size:15px">Заказ оплачен</div><div class="sm">Изменения сохранятся в истории. Доплата или возврат оформляются отдельной операцией.</div></div>':''}
  <div class="sec"><span>1 · Клиент</span><span></span></div>
  <div class="card surf" style="margin-top:0"><label class="field" style="margin-top:0"><span>Телефон</span><input type="tel" data-nf="phone" value="${esc(o.phone)}" placeholder="+7 900 000-00-00"></label><label class="field"><span>ФИО получателя</span><input type="text" data-nf="name" value="${esc(o.name)}" placeholder="Иван Иванов"></label>${(()=>{ const f=DB.orders.find(x=>o.phone&&x.client_phone&&x.client_phone.replace(/\D/g,'').slice(-10)===o.phone.replace(/\D/g,'').slice(-10)); return f?`<div class="found">${I('check')}${esc(f.client_name)} · уже покупал${f.tg_user_id?' · Telegram привязан':''}</div>`:''; })()}</div>
  <div class="sec"><span>2 · Товары</span><span>${o.items.length} поз.</span></div>
- <div class="list surf">${o.items.map((x,i)=>`<div class="pos"><span><b>${esc(x.n)}</b><br><small>${esc(x.s||'')} · ${x.q} шт.</small></span><span class="q">${money(x.p*x.q)} <button type="button" data-delitem="${i}" style="color:var(--w30);margin-left:6px" aria-label="Удалить позицию">✕</button></span></div>`).join('')}<button class="row" type="button" data-sheet="additem" style="color:var(--blue-soft)"><span class="th" style="color:var(--blue-soft)">${I('plus')}</span><span class="tx"><b style="color:var(--blue-soft)">Добавить позицию</b><span>название, характеристики, кол-во, цена</span></span></button></div>
+ <div class="list surf">${o.items.map((x,i)=>`<div class="pos">${x.ph?`<img class="ith" src="${esc(x.ph)}" alt="">`:''}<button type="button" class="pmain" data-sheet="additem" data-ctx="${i}"><b>${esc(x.n)}</b><small>${esc(x.s||'')}${x.s?' · ':''}${x.q} шт.${x.sku?' · арт. '+esc(x.sku):''}</small></button><span class="q">${money(x.p*x.q)} <button type="button" data-delitem="${i}" class="del" aria-label="Удалить позицию">✕</button></span></div>`).join('')}<button class="row" type="button" data-sheet="additem" style="color:var(--blue-soft)"><span class="th" style="color:var(--blue-soft)">${I('plus')}</span><span class="tx"><b style="color:var(--blue-soft)">Добавить позицию</b><span>фото, ссылка, артикул, кол-во, цена</span></span></button></div>
  <div class="sec"><span>3 · Сумма и срок</span><span></span></div>
- <div class="card surf" style="margin-top:0"><div class="dl" style="padding-top:0"><span>Товары</span><b>${money(o.items.reduce((s,x)=>s+x.p*x.q,0))}</b></div><label class="field"><span>Доставка до СДЭК, ₽</span><input type="number" inputmode="numeric" data-nf="ship" value="${o.ship}"></label><div class="dl"><span>Итого, рубли</span><b class="dv">${money(o.items.reduce((s,x)=>s+x.p*x.q,0)+(+o.ship||0))}</b></div>
+ <div class="card surf" style="margin-top:0"><div class="dl" style="padding-top:0"><span>Товары</span><b>${money(o.items.reduce((s,x)=>s+x.p*x.q,0))}</b></div><label class="field"><span>Доставка до СДЭК, ₽</span><input type="number" inputmode="numeric" data-nf="ship" value="${o.ship}"></label><div class="dl"><span>Валюта</span><b>RUB, ₽</b></div><div class="dl"><span>Итого</span><b class="dv">${money(o.items.reduce((s,x)=>s+x.p*x.q,0)+(+o.ship||0))}</b></div>
  <div class="mstat" style="margin:10px 0 0;grid-template-columns:1fr 1fr"><label class="field" style="margin:0"><span>Срок от</span><input type="date" data-nf="from" value="${o.from}"></label><label class="field" style="margin:0"><span>Срок до</span><input type="date" data-nf="to" value="${o.to}"></label></div></div>
  <div class="sec"><span>4 · Доставка</span><span></span></div>
  <div class="card surf" style="margin-top:0"><div class="seg2"><button type="button" data-ntype="ПВЗ" aria-pressed="${o.type==='ПВЗ'}">Пункт СДЭК</button><button type="button" data-ntype="Курьер" aria-pressed="${o.type==='Курьер'}">Курьер</button></div>
  <label class="field"><span>${o.type==='Курьер'?'Адрес доставки':'Пункт выдачи'}</span><input type="text" data-nf="addr" value="${esc(o.addr)}" placeholder="${o.type==='Курьер'?'Город, улица, дом, квартира':'СДЭК Тверская · MSK2041'}"></label>
  <label class="field"><span>Комментарий клиенту (необязательно)</span><input type="text" data-nf="comment" value="${esc(o.comment)}"></label></div>
- <div class="tag">Для ссылки на оплату нужны: товары и сумма · для отправки: ФИО, телефон, доставка</div>`;
+ ${o.editId?'':`<div class="tag">${o.items.length?(missingForSend(o).length?'Сохраним как черновик. Для отправки клиенту не хватает: '+missingForSend(o).join(', '):'Всё готово: создадим заказ и ссылку для клиента'):'Черновик можно сохранить с неполными данными · для ссылки на оплату нужны товары и сумма'}</div>`}`;
 }
 function mlinksHTML(){
  const tod=st.lf==='today'; const w=work().filter(r=>r.pay_status!=='draft'&&(!tod||(r.paid_at&&D(r.paid_at)>=today0()))).sort((a,b)=>a.updated_at<b.updated_at?1:-1);
@@ -819,14 +832,14 @@ function sheetHTML(kind,data){
  const R=(id)=>DB.orders.find(x=>x.id===id);
  if(kind==='pay'){ const r=R(data); return `<div class="grab"></div><h3>Оплата ${money(total(r))}</h3><div class="sm">Заказ ${r.no}.</div>
   <div class="card surf" style="margin:0">${(r.items||[]).map(i=>`<div class="pl"><span>${esc(i.n)}</span><b>${money(i.p*i.q)}</b></div><div class="sep"></div>`).join('')}<div class="pl"><span>Доставка до СДЭК</span><b>${money(r.ship)}</b></div></div>
-  <div class="sm" style="margin:12px 2px 0">Откроется страница оплаты банка. На стенде оплата тестовая: деньги не списываются.</div><button class="sbtn" type="button" data-paygo="${data}">Перейти к оплате</button>`; }
+  <div class="sm" style="margin:12px 2px 0">Откроется страница оплаты банка. На стенде оплата тестовая: деньги не списываются.</div><button class="sbtn" type="button" data-paygo="${data}">Перейти к оплате</button><button class="lnk" type="button" data-payfail="${data}">Тест: банк отказал</button>`; }
  if(kind==='items'){ const r=R(data), it=r.items||[], n=it.reduce((s,i)=>s+(+i.q||1),0); return `<div class="grab"></div><h3>Состав заказа</h3><div class="sm">${r.no} · ${it.length} ${plural(it.length,'позиция','позиции','позиций')}, ${n} шт. · ${money(total(r))}</div>
-  <div class="list surf" style="padding:2px 14px">${it.map(i=>`<div class="row"><span class="th">${I(iconFor([i]))}</span><span class="tx"><b>${esc(i.n)}</b><span>${esc(i.s||'')} · ${i.q} шт.</span></span><span class="r">${money(i.p*i.q)}</span></div>`).join('')}<div class="row"><span class="th">${I('truck')}</span><span class="tx"><b>Доставка до СДЭК</b><span>до пункта выдачи</span></span><span class="r">${money(r.ship)}</span></div></div>
+  <div class="list surf" style="padding:2px 14px">${it.map(i=>`<div class="row">${thumb([i])}</span><span class="tx"><b>${esc(i.n)}</b><span>${esc(i.s||'')} · ${i.q} шт.</span></span><span class="r">${money(i.p*i.q)}</span></div>`).join('')}<div class="row"><span class="th">${I('truck')}</span><span class="tx"><b>Доставка до СДЭК</b><span>до пункта выдачи</span></span><span class="r">${money(r.ship)}</span></div></div>
   <button class="sbtn" type="button" data-goorder="${data}">Открыть заказ</button>`; }
  if(kind==='report'){ const r=R(data); return `<div class="grab"></div><h3>Ошибка в данных</h3><div class="sm">Заказ ${r?r.no:''}. Менеджер проверит и исправит.</div>
   ${['Получатель или телефон','Адрес или пункт выдачи','Состав заказа','Другое'].map((t,i)=>`<button class="opt" type="button" role="radio" aria-checked="${i===0}" data-rep="${t}"><span class="radio"></span><span class="tx"><b>${t}</b></span></button>`).join('')}
   <label for="repText" style="position:absolute;left:-9999px">Что не так</label><textarea id="repText" placeholder="Что не так? Например: телефон +7 900 …"></textarea><button class="sbtn" type="button" data-repsend="${data}">Отправить менеджеру</button>`; }
- if(kind==='pickorder') return `<div class="grab"></div><h3>По какому заказу?</h3><div class="list surf" style="padding:2px 14px">${myOrders().filter(r=>!r.archived).map(r=>`<button class="row" type="button" data-pick="${r.id}"><span class="th">${I(iconFor(r.items||[]))}</span><span class="tx"><b>${esc(title(r))}</b><span>${r.no}</span></span></button>`).join('')||'<div class="sm" style="padding:14px 0">Заказов пока нет</div>'}</div>`;
+ if(kind==='pickorder') return `<div class="grab"></div><h3>По какому заказу?</h3><div class="list surf" style="padding:2px 14px">${myOrders().filter(r=>!r.archived).map(r=>`<button class="row" type="button" data-pick="${r.id}">${thumb(r.items||[])}</span><span class="tx"><b>${esc(title(r))}</b><span>${r.no}</span></span></button>`).join('')||'<div class="sm" style="padding:14px 0">Заказов пока нет</div>'}</div>`;
  if(kind==='bind') return `<div class="grab"></div><h3>Привязать заказ</h3><div class="sm">Введите код из ссылки менеджера. Для теста подойдут DEMO1–DEMO7.</div><label class="field"><span>Код</span><input type="text" id="bindCode" autocapitalize="characters" placeholder="DEMO1"></label><button class="sbtn" type="button" data-binddo>Привязать</button>`;
  if(kind==='how') return `<div class="grab"></div><h3>Как мы работаем</h3><div class="list surf" style="padding:2px 14px">${[['Заказ','менеджер собирает состав и присылает ссылку'],['Оплата','на странице банка; заказ появится после подтверждения'],['Срок','ожидаемый, около 20 дней; если изменится — напишем'],['Изменения','после оплаты — только через менеджера'],['Отмена','порядок и возврат денег уточняются']].map(r=>`<div class="row" style="align-items:flex-start"><span class="tx"><b>${r[0]}</b><span style="white-space:normal">${r[1]}</span></span></div>`).join('')}</div><button class="sbtn ghost" type="button" data-close>Понятно</button>`;
  if(kind==='calendar') return `<div class="grab"></div><h3>В календарь телефона</h3><div class="sm">Добавим ожидаемые даты, напомним за день.</div>${myOrders().filter(r=>!r.archived&&!r.cancelled&&!isDone(r)&&r.eta_to).map((r,i)=>`<button class="opt" type="button" role="checkbox" aria-checked="true" data-calopt="${i}"><span class="radio"></span><span class="tx"><b>${esc(title(r))}</b><span>${r.stage===6?'забрать до ':'ожидаем '}${etaText(r)}</span></span></button>`).join('')||'<div class="sm">Нет активных заказов с датой</div>'}<button class="sbtn" type="button" data-caldo>Добавить</button>`;
@@ -845,6 +858,7 @@ function sheetHTML(kind,data){
  if(kind==='mnote'){ const r=R(data); return `<div class="grab"></div><h3>Комментарии</h3><label class="field"><span>Клиенту (видно в заказе)</span><textarea id="cClient">${esc(r.comment_client||'')}</textarea></label><label class="field"><span>Внутренняя заметка (видите только вы)</span><textarea id="cNote">${esc(r.note_internal||'')}</textarea></label><button class="sbtn" type="button" data-notego="${data}">Сохранить</button>`; }
  if(kind==='mmore'){ const r=R(data); return `<div class="grab"></div><h3>${r.no}</h3><div class="list surf" style="padding:2px 14px">
   ${r.pay_status==='draft'?`<button class="row" type="button" data-sendlink="${data}"><span class="tx"><b>Отправить ссылку клиенту</b><span>черновик станет «Ждёт оплаты»</span></span>${I('chev')}</button>`:''}
+  ${r.cancelled?'':`<button class="row" type="button" data-editord="${data}"><span class="tx"><b>Изменить данные и товары</b><span>${r.pay_status==='paid'?'изменения сохранятся в истории':'до оплаты можно менять всё'}</span></span>${I('chev')}</button>`}
   <button class="row" type="button" data-copy="${BOT_APP}?startapp=${r.bind_code}"><span class="tx"><b>Скопировать ссылку для клиента</b><span>код ${r.bind_code}</span></span>${I('copy')}</button>
   <button class="row" type="button" data-archive="${data}"><span class="tx"><b>${r.archived?'Вернуть из архива':'Архивировать'}</b><span>${r.archived?'снова в рабочем списке':'уберём из рабочего списка'}</span></span>${I('chev')}</button>
   ${r.cancelled?'':`<button class="row" type="button" data-sheet="mcancel" data-ctx="${data}"><span class="tx"><b style="color:var(--alert)">Отменить заказ</b><span>с подтверждением, клиент получит уведомление</span></span></button>`}</div>`; }
@@ -855,12 +869,22 @@ function sheetHTML(kind,data){
   return `<div class="grab"></div><h3>Следующий этап</h3><div class="sm">${ok.length} из ${os.length} перейдут дальше${ok.length<os.length?'. Остальные не оплачены, получены или ждут трек СДЭК (переводите по одному)':''}.</div>
   <div class="list surf" style="padding:2px 14px">${ok.map(r=>`<div class="row"><span class="tx"><b>${r.no} · ${esc(r.client_name||'')}</b><span>${r.stage<0?'до выкупа':STAGES[r.stage].t} → <b style="color:#fff;font-weight:500">${STAGES[r.stage+1].t}</b></span></span></div>`).join('')}</div>
   <div class="sm" style="margin:12px 2px 0">Каждый клиент получит одно сообщение о новом этапе.</div><button class="sbtn" type="button" data-bulkgo ${ok.length?'':'disabled'}>Перевести ${ok.length} и уведомить</button>`; }
- if(kind==='additem') return `<div class="grab"></div><h3>Позиция</h3><label class="field"><span>Название</span><input type="text" id="itN" placeholder="iPhone 16 Pro"></label><label class="field"><span>Характеристики</span><input type="text" id="itS" placeholder="256 ГБ, Natural Titanium"></label><div class="mstat" style="margin:10px 0 0;grid-template-columns:1fr 1fr"><label class="field" style="margin:0"><span>Кол-во</span><input type="number" inputmode="numeric" id="itQ" value="1"></label><label class="field" style="margin:0"><span>Цена за шт., ₽</span><input type="number" inputmode="numeric" id="itP" placeholder="109000"></label></div><button class="sbtn" type="button" data-itemadd>Добавить</button>`;
+ if(kind==='additem'){ const ix=data!==undefined&&data!==''?+data:-1, x=ix>=0?st.newo.items[ix]:{}; const v=(k,d)=>esc(x[k]??d??'');
+  return `<div class="grab"></div><h3>${ix>=0?'Позиция':'Новая позиция'}</h3>
+  <label class="field"><span>Название</span><input type="text" id="itN" value="${v('n')}" placeholder="iPhone 16 Pro"></label>
+  <label class="field"><span>Характеристики: размер, цвет, модель</span><input type="text" id="itS" value="${v('s')}" placeholder="256 ГБ, Natural Titanium"></label>
+  <div class="mstat" style="margin:10px 0 0;grid-template-columns:1fr 1fr"><label class="field" style="margin:0"><span>Кол-во</span><input type="number" inputmode="numeric" id="itQ" value="${v('q',1)}"></label><label class="field" style="margin:0"><span>Цена за шт., ₽</span><input type="number" inputmode="numeric" id="itP" value="${v('p')}" placeholder="109000"></label></div>
+  <label class="field"><span>Фото (ссылка на картинку)</span><input type="url" id="itPh" value="${v('ph')}" placeholder="https://…/photo.jpg"></label>
+  <label class="field"><span>Ссылка на товар</span><input type="url" id="itU" value="${v('url')}" placeholder="https://www.apple.com/…"></label>
+  <label class="field"><span>Артикул (если есть)</span><input type="text" id="itK" value="${v('sku')}" placeholder="MYMJ3"></label>
+  <label class="field"><span>Комментарий к позиции</span><input type="text" id="itC" value="${v('c')}" placeholder="Например: без гравировки"></label>
+  <button class="sbtn" type="button" data-itemadd="${ix}">${ix>=0?'Сохранить':'Добавить'}</button>`; }
  if(kind==='mcreated'){ const r=R(data); return `<div class="grab"></div><h3>Заказ создан</h3><div class="sm">${r.no} · ${esc(r.client_name||'')} · ${money(total(r))}</div>
   <div class="card surf" style="margin:0"><div class="pl"><span>Ссылка для клиента</span><span>код ${r.bind_code}</span></div><div class="trkrow"><span class="trkno" style="font-size:14px">${BOT_APP.replace('https://','')}?startapp=${r.bind_code}</span><button class="icb" type="button" data-copy="${BOT_APP}?startapp=${r.bind_code}" aria-label="Скопировать ссылку">${I('copy')}</button></div></div>
   <div class="sm" style="margin:12px 2px 0">Клиент открывает ссылку — заказ привязывается к его Telegram и появляется у него сразу.</div>
   <button class="sbtn" type="button" data-goorderm="${data}">Открыть заказ</button>`; }
  if(kind==='mtpledit'){ const n=NOTIF[data]; return `<div class="grab"></div><h3>${n[0]}</h3><div class="sm">Подстановки: {no}, {stage}, {eta}, {track}, {until}</div><label for="tplTx" style="position:absolute;left:-9999px">Текст</label><textarea id="tplTx">${n[1]}</textarea><div class="sm" style="margin:12px 2px 4px">Так увидит клиент:</div><div class="msg">${n[1].replace('{no}','<b>MJL-001045</b>').replace('{stage}','Отправлен в Россию').replace('{eta}','18–21 октября').replace('{track}','1 2345 6789 01').replace('{until}','24 октября').replace('{old}','18–21.10').replace('{reason}','проверка на таможне').replace('{refund}','Деньги вернём на карту.')}<span class="mb">Открыть заказ</span></div><button class="sbtn" type="button" data-close data-toast="Шаблон сохранён">Сохранить</button>`; }
+ if(kind==='msort') return `<div class="grab"></div><h3>Порядок и период</h3><div class="sm" style="margin-top:6px">Сортировка</div>${SORTS.map(([k,t])=>`<button class="opt" type="button" role="radio" aria-checked="${(st.ms||'upd')===k}" data-msort="${k}"><span class="radio"></span><span class="tx"><b>${t}</b></span></button>`).join('')}<div class="sm" style="margin:16px 2px 0">Дата создания</div>${PERIODS.map(([k,t])=>`<button class="opt" type="button" role="radio" aria-checked="${(st.mp||'all')===k}" data-mperiod="${k}"><span class="radio"></span><span class="tx"><b>${t}</b></span></button>`).join('')}<button class="sbtn" type="button" data-close>Готово</button>`;
  if(kind==='demo') return `<div class="grab"></div><h3>Стенд</h3><div class="sm">Фон для показа.</div><div class="opts">${Object.entries(BGS).map(([k,v])=>`<button type="button" data-bg="${k}" aria-pressed="${st.bg===k}">${v}</button>`).join('')}</div>`;
  return '';
 }
@@ -872,9 +896,14 @@ const sheetOpen = () => $('#sheet').classList.contains('on');
 const ROOT = {buyer:[['home','Главная','home'],['catalog','Каталог','grid'],['chat','Менеджер','chat'],['profile','Профиль','user']],
  manager:[['mtoday','Сегодня','bolt'],['morders','Заказы','list'],['mlinks','Ссылки','link'],['mmore','Ещё','dots']]};
 function render(v){ switch(v.v){
- case 'home':return homeHTML(); case 'order':return orderHTML(v.k); case 'chat':return chatHTML(); case 'catalog':return catalogHTML(); case 'profile':return profileHTML(); case 'paid':return paidHTML(v.k);
+ case 'home':return homeHTML(); case 'order':return orderHTML(v.k); case 'chat':return chatHTML(); case 'catalog':return catalogHTML(); case 'profile':return profileHTML(); case 'paid':return paidHTML(v.k); case 'payfail':return payfailHTML(v.k); case 'linkbad':return linkbadHTML(v); case 'linktaken':return linktakenHTML(v); case 'offline':return offlineHTML();
  case 'mtoday':return todayHTML(); case 'morders':return mordersHTML(); case 'morder':return morderHTML(v.id); case 'mnew':return mnewHTML(); case 'mlinks':return mlinksHTML(); case 'mmore':return mmoreHTML();
  case 'march':return marchHTML(); case 'mdrafts':return mdraftsHTML(); case 'mtpl':return mtplHTML(); case 'mvis':return mvisHTML(); case 'mnorms':return mnormsHTML(); } return ''; }
+function stateHTML(icon,title,text,btns){ return `<div class="stico">${I(icon)}</div><div class="date long" style="margin-top:22px">${title}</div><div class="psub">${text}</div>${btns||''}`; }
+function payfailHTML(id){ const r=DB.orders.find(x=>x.id===id)||{}; return `<button class="back" type="button" data-back>${I('back')}Назад</button>`+stateHTML('alert','Оплата<br>не прошла',`Банк отклонил платёж, деньги не списаны. Заказ ${r.no||''} сохранён, оплату можно повторить. Если не получается, напишите менеджеру.`,`<button class="btg surf" type="button" data-tab="chat" data-ctx="${id}">${I('chat')}Написать менеджеру</button>`); }
+function linkbadHTML(v){ return stateHTML('link',v.cancelled?'Ссылка<br>не действует':'Ссылка<br>не найдена',v.cancelled?`Заказ ${esc(v.no||'')} отменён, оплатить его по этой ссылке нельзя. Если это ошибка, напишите менеджеру.`:'Проверьте, что ссылка скопирована полностью, или попросите менеджера прислать её ещё раз.',`<button class="pbtn" type="button" data-tab="chat">${I('chat')}Написать менеджеру</button><button class="btg surf" type="button" data-tab="home">На главную</button>`); }
+function linktakenHTML(v){ return stateHTML('lock','Заказ уже<br>привязан',`Заказ ${esc(v.no||'')} открыт в другом аккаунте Telegram. Чужие заказы не показываем. Если это ваш заказ, менеджер перепривяжет его.`,`<button class="pbtn" type="button" data-tab="chat">${I('chat')}Написать менеджеру</button><button class="btg surf" type="button" data-tab="home">На главную</button>`); }
+function offlineHTML(){ return stateHTML('cloud','Нет связи','Не получилось загрузить заказы. Проверьте интернет и попробуйте ещё раз.',`<button class="pbtn" type="button" data-retry>Повторить</button>`); }
 function paidHTML(id){ const r=DB.orders.find(x=>x.id===id)||{};
  return `<div style="width:72px;height:72px;border-radius:50%;background:#fff;color:#0B0D18;display:grid;place-items:center;margin:56px 18px 0">${I('check')}</div><div class="date long" style="margin-top:22px">Оплата<br>получена</div><div class="psub">${money(total(r))} · заказ ${r.no||''}. Чек и подтверждение придут в чат бота. Выкупим в США в ближайшие дни.</div>
  <div class="card first surf"><div class="mrow"><span class="th">${I('chat')}</span><div class="tx"><b>Присылать статусы в бот?</b><span>одно сообщение на каждый новый этап</span></div><span class="tog" role="switch" aria-checked="${st.notify}" data-toggle="notify" tabindex="0"></span></div></div>`; }
@@ -895,10 +924,11 @@ let mainAction=null;
 function mainFor(v){ if(sheetOpen()) return null;
  if(v.v==='order'){ const r=DB.orders.find(x=>x.id===v.k); if(!r) return null; if(r.pay_status==='unpaid') return {text:'Перейти к оплате · '+money(total(r)),sheet:'pay',k:v.k}; if(r.track&&r.stage===6) return {text:'Отследить доставку',toast:'Откроется отслеживание на сайте СДЭК'}; return null; }
  if(v.v==='paid') return {text:'Открыть заказ',paidGo:v.k};
- if(v.v==='morder'){ const r=DB.orders.find(x=>x.id===v.id); if(!r||r.cancelled||isDone(r)) return null; if(r.pay_status==='draft') return {text:'Отправить ссылку клиенту',sendlink:r.id}; if(r.pay_status!=='paid') return {text:'Напомнить об оплате',remind:r.id}; return {text:'Следующий этап: '+STAGES[r.stage+1].t,sheet:'mstage',k:v.id}; }
- if(v.v==='mnew') return {text:'Создать заказ и ссылку',create:true};
+ if(v.v==='morder'){ const r=DB.orders.find(x=>x.id===v.id); if(!r||r.cancelled||isDone(r)) return null; if(r.pay_status==='draft'){ const miss=missingForSend(draftFrom(r)); if(!(r.items||[]).length) return {text:'Добавить товары',edit:r.id}; return miss.length?{text:'Заполнить: '+miss.join(', '),edit:r.id}:{text:'Отправить ссылку клиенту',sendlink:r.id}; } if(r.pay_status!=='paid') return {text:'Напомнить об оплате',remind:r.id}; return {text:'Следующий этап: '+STAGES[r.stage+1].t,sheet:'mstage',k:v.id}; }
+ if(v.v==='mnew'){ const o=st.newo||{items:[]}; if(o.editId) return {text:'Сохранить изменения',save:true}; return {text:!o.items.length?'Сохранить черновик':missingForSend(o).length?'Сохранить черновик':'Создать заказ и ссылку',create:true}; }
+ if(v.v==='payfail') return {text:'Повторить оплату',sheet:'pay',k:v.k};
  return null; }
-function updateChrome(){ const v=cur(), m=v?mainFor(v):null; mainAction=m; $('#device').classList.toggle('no-tabs', pushed() || (v&&v.v==='paid'));
+function updateChrome(){ const v=cur(), m=v?mainFor(v):null; mainAction=m; $('#device').classList.toggle('no-tabs', pushed() || (v&&/^(paid|offline)$/.test(v.v)));
  if(inTG){ try{ if(m) tg.MainButton.setParams({text:m.text,color:'#FFFFFF',text_color:'#0B0D18',is_visible:true,is_active:true}); else tg.MainButton.hide(); (st.stack.length>1||sheetOpen())?tg.BackButton.show():tg.BackButton.hide(); }catch(e){} }
  else { $('#mainbtn').hidden=!m; if(m) $('#mainbtnBtn').textContent=m.text; } }
 let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),2600); }
@@ -910,7 +940,10 @@ function setRole(r){ st.role=r; ls.set('mj-role',r); st.tab=r==='buyer'?'home':'
 function newDraft(){ const t=today0(), a=new Date(t), b=new Date(t); a.setDate(a.getDate()+20); b.setDate(b.getDate()+23); const iso=(d)=>d.toISOString().slice(0,10);
  let saved=null; try{ saved=JSON.parse(ls.get('mj-draft')||'null'); }catch(e){}
  return saved || {phone:'',name:'',items:[],ship:3500,from:iso(a),to:iso(b),type:'ПВЗ',addr:'',comment:''}; }
-const saveDraft = () => ls.set('mj-draft', JSON.stringify(st.newo));
+function draftFrom(r){ const dv=r.delivery||{}; return {editId:r.id,phone:r.client_phone||'',name:r.client_name||'',items:JSON.parse(JSON.stringify(r.items||[])),ship:r.ship,from:r.eta_from||'',to:r.eta_to||'',type:/Курьер/.test(dv.type||'')?'Курьер':'ПВЗ',addr:dv.addr||'',comment:r.comment_client||''}; }
+const missingForSend = (o) => [!o.name&&'ФИО', !o.phone&&'телефон', !o.addr&&'доставка'].filter(Boolean);
+const orderBody = (o) => ({client_name:o.name||null,client_phone:o.phone||null,items:o.items,ship:+o.ship||0,currency:'RUB',eta_from:o.from||null,eta_to:o.to||null,delivery:o.addr?{type:o.type==='Курьер'?'Курьер СДЭК':'Пункт выдачи СДЭК',name:o.type==='Курьер'?'Курьер':o.addr.split('·')[0].trim(),addr:o.addr,code:(o.addr.split('·')[1]||'').trim()}:{},comment_client:o.comment||null});
+const saveDraft = () => { if(!st.newo.editId) ls.set('mj-draft', JSON.stringify(st.newo)); };
 
 /* ================= ДЕЙСТВИЯ ================= */
 async function runMain(){ const m=mainAction; if(!m) return; haptic('medium');
@@ -918,16 +951,32 @@ async function runMain(){ const m=mainAction; if(!m) return; haptic('medium');
  else if(m.paidGo){ st.tab='home'; renderTabs(); st.stack=[{v:'home'}]; push({v:'order',k:m.paidGo}); }
  else if(m.remind) act(()=>addHist(m.remind,'напоминание об оплате отправлено',{notified:true}),'Напоминание отправлено клиенту');
  else if(m.sendlink) act(()=>Promise.all([patchOrder(m.sendlink,{pay_status:'unpaid'}),addHist(m.sendlink,'ссылка на оплату отправлена клиенту',{notified:true})]),'Ссылка отправлена · заказ ждёт оплаты');
- else if(m.create){ const o=st.newo; if(!o.items.length){ haptic('warn'); return toast('Добавьте хотя бы одну позицию'); } if(!o.phone||!o.name){ haptic('warn'); return toast('Нужны ФИО и телефон клиента'); }
-  try{ const rows=await api('majlis_orders',{method:'POST',body:JSON.stringify({client_name:o.name,client_phone:o.phone,items:o.items,ship:+o.ship||0,pay_status:'unpaid',eta_from:o.from||null,eta_to:o.to||null,delivery:{type:o.type==='Курьер'?'Курьер СДЭК':'Пункт выдачи СДЭК',name:o.type==='Курьер'?'Курьер':o.addr.split('·')[0].trim(),addr:o.addr,code:(o.addr.split('·')[1]||'').trim()},comment_client:o.comment||null})});
-   const r=rows[0]; await addHist(r.id,'заказ создан, ссылка на оплату отправлена',{notified:true}); ls.set('mj-draft',''); st.newo=null; await load(); haptic('ok'); st.stack=[{v:'mtoday'}]; st.tab='mtoday'; renderTabs(); mount(cur()); openSheet('mcreated',r.id); }
+ else if(m.create){ const o=st.newo; const ready=o.items.length && !missingForSend(o).length;
+  try{ const rows=await api('majlis_orders',{method:'POST',body:JSON.stringify(Object.assign(orderBody(o),{pay_status:ready?'unpaid':'draft'}))});
+   const r=rows[0]; await addHist(r.id,ready?'заказ создан, ссылка на оплату создана':'черновик сохранён'); ls.set('mj-draft',''); st.newo=null; await load(); haptic('ok');
+   if(ready){ st.stack=[{v:'mtoday'}]; st.tab='mtoday'; renderTabs(); mount(cur()); openSheet('mcreated',r.id); }
+   else { st.stack=[{v:'mtoday'},{v:'morder',id:r.id}]; st.tab='mtoday'; renderTabs(); mount(cur(),'fwd'); toast('Черновик '+r.no+' сохранён'); } }
   catch(e){ haptic('warn'); toast('Не получилось: '+e.message); } }
+ else if(m.edit){ st.newo=draftFrom(DB.orders.find(x=>x.id===m.edit)); push({v:'mnew'}); }
+ else if(m.save){ const o=st.newo, r=DB.orders.find(x=>x.id===o.editId); const was=total(r); const body=orderBody(o); const now=(o.items||[]).reduce((s,i)=>s+i.p*i.q,0)+(+o.ship||0);
+  const ch=[]; if((r.client_name||'')!==(o.name||'')||(r.client_phone||'')!==(o.phone||'')) ch.push('получатель'); if(((r.delivery||{}).addr||'')!==(o.addr||'')) ch.push('доставка'); if(JSON.stringify(r.items)!==JSON.stringify(o.items)||r.ship!==(+o.ship||0)) ch.push('состав'); if((r.eta_from||'')!==(o.from||'')||(r.eta_to||'')!==(o.to||'')) ch.push('срок'); if((r.comment_client||'')!==(o.comment||'')) ch.push('комментарий');
+  if(!ch.length){ toast('Изменений нет'); return back(); }
+  const txt='изменено: '+ch.join(', ')+(was!==now?` · сумма ${money(was)} → ${money(now)}${r.pay_status==='paid'?' (доплата или возврат отдельной операцией)':''}`:'');
+  await act(()=>Promise.all([patchOrder(r.id,body),addHist(r.id,txt)]),'Сохранено · изменения в истории'); st.newo=null; back(); }
 }
-async function bind(code, silent){ code=(code||'').trim().toUpperCase(); if(!code) return;
- try{ const rows=await api(`majlis_orders?bind_code=eq.${encodeURIComponent(code)}`,{method:'PATCH',body:JSON.stringify({tg_user_id:MY_ID})});
-  if(!rows||!rows.length){ if(!silent) toast('Заказ с таким кодом не найден'); return; }
-  await addHist(rows[0].id,'клиент открыл ссылку, Telegram привязан'); await load(); haptic('ok'); toast('Заказ '+rows[0].no+' привязан'); if(st.role!=='buyer') setRole('buyer'); else setTab('home'); }
- catch(e){ toast('Не получилось привязать: '+e.message); } }
+/* привязка: заказ достаётся первому, кто открыл ссылку; пересланная ссылка чужой заказ не открывает (ТЗ, раздел 06). Демо-коды DEMO* общие для теста */
+const showState = (v) => { if(sheetOpen()) closeSheet(); if(st.role!=='buyer'){ st.role='buyer'; ls.set('mj-role','buyer'); renderSide(); } st.tab='home'; st.stack=[{v:'home'},v]; renderTabs(); mount(cur(),'fwd'); };
+async function bind(code){ code=(code||'').trim().toUpperCase(); if(!code) return;
+ try{ const found=await api(`majlis_orders?bind_code=eq.${encodeURIComponent(code)}&select=id,no,tg_user_id,cancelled`); const o=(found||[])[0];
+  if(!o){ haptic('warn'); return showState({v:'linkbad'}); }
+  if(o.cancelled){ haptic('warn'); return showState({v:'linkbad',cancelled:true,no:o.no}); }
+  const demo=/^DEMO/.test(code);
+  if(o.tg_user_id && +o.tg_user_id!==+MY_ID && !demo){ haptic('warn'); return showState({v:'linktaken',no:o.no}); }
+  if(+o.tg_user_id!==+MY_ID){ const filt=demo?'':'&tg_user_id=is.null'; const rows=await api(`majlis_orders?id=eq.${o.id}${filt}`,{method:'PATCH',body:JSON.stringify({tg_user_id:MY_ID})});
+   if(!rows||!rows.length){ haptic('warn'); return showState({v:'linktaken',no:o.no}); }
+   await addHist(o.id,'клиент открыл ссылку, Telegram привязан'); }
+  await load(); haptic('ok'); toast('Заказ '+o.no+' у вас'); showState({v:'order',k:o.id}); }
+ catch(e){ toast('Не получилось открыть заказ: '+e.message); } }
 
 document.addEventListener('click',(e)=>{
  const b=e.target.closest('button,[data-toggle]'); if(!b) return; const d=b.dataset;
@@ -963,12 +1012,17 @@ document.addEventListener('click',(e)=>{
  if(d.binddo!==undefined){ const c=($('#bindCode')||{}).value; closeSheet(); return bind(c); }
  if(d.toggle==='notify'){ st.notify=!st.notify; document.querySelectorAll('[data-toggle="notify"] .tog,.tog[data-toggle="notify"]').forEach(x=>x.setAttribute('aria-checked',st.notify)); haptic('sel'); return; }
  if(d.toggle==='haptic'){ st.hapticOn = st.hapticOn===false; ls.set('mj-haptic',st.hapticOn?'1':'0'); b.querySelector('.tog').setAttribute('aria-checked', st.hapticOn!==false); haptic('sel'); return; }
+ if(d.payfail){ const id=d.payfail; closeSheet(); toast('Тестовая оплата: банк проверяет');
+  return act(async()=>{ await patchOrder(id,{pay_status:'checking'}); await load(); refresh(); await new Promise(r=>setTimeout(r,2200)); await patchOrder(id,{pay_status:'unpaid'}); await addHist(id,'попытка оплаты не прошла: банк отказал',{who:'Система'}); st.stack=[{v:'home'},{v:'payfail',k:id}]; await load(); mount(cur(),'fwd'); }); }
  if(d.paygo){ const id=d.paygo; closeSheet(); toast('Тестовая оплата: банк подтверждает');
   return act(async()=>{ await patchOrder(id,{pay_status:'checking'}); await load(); refresh(); await new Promise(r=>setTimeout(r,2600)); await patchOrder(id,{pay_status:'paid',paid_at:new Date().toISOString()}); await addHist(id,'оплата подтверждена (тестовая)',{who:'Система',notified:true}); st.stack=[{v:'paid',k:id}]; await load(); mount(cur(),'fwd'); }); }
  /* менеджер */
+ if(d.retry!==undefined){ return sync(()=>{ if(online){ st.stack=[{v:st.tab}]; mount(cur()); renderTabs(); } else toast('Всё ещё нет связи'); }); }
  if(d.digest!==undefined){ st.lf='today'; st.lfKeep=true; return setTab('mlinks'); }
  if(d.lf){ st.lf=d.lf==='today'?'today':null; haptic('sel'); return refresh(); }
  if(d.sync!==undefined) return sync(()=>{ refresh(); toast('Обновлено'); });
+ if(d.msort){ st.ms=d.msort; document.querySelectorAll('[data-msort]').forEach(x=>x.setAttribute('aria-checked',x===b)); haptic('sel'); return refresh(); }
+ if(d.mperiod){ st.mp=d.mperiod; document.querySelectorAll('[data-mperiod]').forEach(x=>x.setAttribute('aria-checked',x===b)); haptic('sel'); return refresh(); }
  if(d.mf){ st.mf=d.mf; haptic('sel'); return refresh(); }
  if(d.pipe!==undefined){ st.mf= +d.pipe<0?'unpaid':'st:'+d.pipe; st.mfKeep=true; return setTab('morders'); }
  if(d.mselect!==undefined){ st.msel = st.msel?null:new Set(); haptic('sel'); return refresh(); }
@@ -991,8 +1045,12 @@ document.addEventListener('click',(e)=>{
  if(d.notego){ const id=d.notego, c=($('#cClient')||{}).value.trim(), n=($('#cNote')||{}).value.trim(); closeSheet(); return act(()=>Promise.all([patchOrder(id,{comment_client:c||null,note_internal:n||null}),addHist(id,'комментарии обновлены')]),'Сохранено'); }
  if(d.cancelgo){ const id=d.cancelgo, r=DB.orders.find(x=>x.id===id); closeSheet(); return act(()=>Promise.all([patchOrder(id,Object.assign({cancelled:true},r.pay_status==='paid'?{pay_status:'refund'}:{})),addHist(id,'заказ отменён'+(r.pay_status==='paid'?', оформлен возврат':''),{notified:true})]),'Заказ отменён · клиент уведомлён'); }
  if(d.archive){ const id=d.archive, r=DB.orders.find(x=>x.id===id); closeSheet(); return act(()=>Promise.all([patchOrder(id,{archived:!r.archived}),addHist(id,r.archived?'возвращён из архива':'перенесён в архив')]),r.archived?'Вернули в работу':'В архиве'); }
- if(d.sendlink){ closeSheet(); return act(()=>Promise.all([patchOrder(d.sendlink,{pay_status:'unpaid'}),addHist(d.sendlink,'ссылка на оплату отправлена клиенту',{notified:true})]),'Ссылка отправлена'); }
- if(d.itemadd!==undefined){ const n=($('#itN').value||'').trim(), s=($('#itS').value||'').trim(), q=+($('#itQ').value||1), p=+($('#itP').value||0); if(!n||!p){ haptic('warn'); return toast('Нужны название и цена'); } st.newo.items.push({n,s,q:q||1,p}); saveDraft(); closeSheet(); haptic('sel'); return refresh(); }
+ if(d.sendlink){ closeSheet(); const rr=DB.orders.find(x=>x.id===d.sendlink), miss=missingForSend(draftFrom(rr)); if(!(rr.items||[]).length||miss.length){ haptic('warn'); return toast('Перед отправкой нужны: '+((rr.items||[]).length?'':'товары, ')+miss.join(', ')); } return act(()=>Promise.all([patchOrder(d.sendlink,{pay_status:'unpaid'}),addHist(d.sendlink,'ссылка на оплату отправлена клиенту',{notified:true})]),'Ссылка отправлена'); }
+ if(d.itemadd!==undefined){ const g=(id)=>(($('#'+id)||{}).value||'').trim(); const n=g('itN'), p=+g('itP'); if(!n||!p){ haptic('warn'); return toast('Нужны название и цена'); }
+  const it={n,s:g('itS'),q:+g('itQ')||1,p}; [['ph','itPh'],['url','itU'],['sku','itK'],['c','itC']].forEach(([k,id])=>{ const val=g(id); if(val) it[k]=val; });
+  const ix=d.itemadd===''?-1:+d.itemadd; if(ix>=0) st.newo.items[ix]=it; else st.newo.items.push(it); saveDraft(); closeSheet(); haptic('sel'); return refresh(); }
+ if(d.ext){ if(inTG){ try{ tg.openLink(d.ext); return; }catch(_){} } return window.open(d.ext,'_blank','noopener'); }
+ if(d.editord){ closeSheet(); st.newo=draftFrom(DB.orders.find(x=>x.id===d.editord)); return push({v:'mnew'}); }
  if(d.delitem!==undefined){ st.newo.items.splice(+d.delitem,1); saveDraft(); haptic('sel'); return refresh(); }
  if(d.ntype){ st.newo.type=d.ntype; saveDraft(); haptic('sel'); return refresh(); }
  if(d.vis!==undefined){ st.vis[d.vis]=!st.vis[d.vis]; haptic('sel'); return refresh(); }
@@ -1039,9 +1097,8 @@ preload(false);
 (async()=>{
  try{ await load(); }catch(e){ online=false; }
  const sp = (inTG && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get('startapp') || '';
- st.stack=[{v:st.tab}]; renderTabs(); mount(cur());
- if(!online) toast('Нет связи с базой. Проверьте интернет');
- if(sp) bind(sp, true);
+ st.stack=[online?{v:st.tab}:{v:'offline'}]; renderTabs(); mount(cur());
+ if(sp) bind(sp);
  const idle=()=>performance.now()-lastMove>1200 && !sheetOpen() && !document.querySelector('#vp .screen.gone');
  let pending=false;
  const tick=()=>{ if(document.visibilityState!=='visible') return; if(pending && idle()){ pending=false; refresh(); return; } if(sheetOpen()) return; sync((ch)=>{ if(ch){ if(idle()) refresh(); else pending=true; } }); };
