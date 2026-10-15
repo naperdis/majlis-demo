@@ -362,6 +362,7 @@ button.card:active,.cat:active,.btg:active,.pbtn:active,.chip:active{transform:s
 .pos b{font-weight:500;font-size:14.5px}.pos small{color:var(--w50);font-size:12.5px}
 .pos .q{font-family:var(--disp);font-size:14px;text-align:right}
 .mstat>*{min-width:0}.field input{min-width:0;max-width:100%;box-sizing:border-box}
+.ptr{position:absolute;left:50%;top:0;width:36px;height:36px;margin-left:-18px;border-radius:50%;display:grid;place-items:center;z-index:5;pointer-events:none;opacity:0;transform:translateY(-44px);transition:opacity .25s,transform .3s var(--ease);background:rgba(16,19,40,.7)}.ptr i{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:#fff}.ptr.spin i{animation:ptrspin .7s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}
 .seg2{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surf2);margin-top:10px}
 .seg2 button{flex:1;height:38px;text-align:center;justify-content:center;border-radius:999px;font-size:14px;color:var(--w70)}
 .seg2 button[aria-pressed="true"]{background:#fff;color:#0B0D18;font-weight:500}
@@ -1037,6 +1038,30 @@ preload(false);
  if(sp) bind(sp, true);
  setInterval(()=>{ if(document.visibilityState==='visible' && !sheetOpen()) sync((ch)=>{ if(ch) refresh(); }); }, POLL_MS);
  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') sync((ch)=>{ if(ch) refresh(); }); });
+})();
+
+/* ================= ЖЕСТЫ ================= */
+/* свайп от левого края = «Назад»; потянуть вниз в начале экрана = обновить данные */
+(()=>{
+ const vp=$('#vp'), ptr=document.createElement('div'); ptr.className='ptr'; ptr.setAttribute('aria-hidden','true'); ptr.innerHTML='<i></i>'; vp.appendChild(ptr);
+ const PULL=72, BACK=90; let mode=null, el=null, sx=0, sy=0, dx=0, d=0, armed=false, busy=false;
+ const reset=()=>{ if(el){ el.style.transition=''; el.style.transform=''; } ptr.style.transition=''; ptr.style.opacity=''; ptr.style.transform=''; mode=null; el=null; dx=0; d=0; armed=false; };
+ vp.addEventListener('touchstart',(e)=>{ if(busy||sheetOpen()||e.touches.length>1) return; const t=e.touches[0], sc=vp.querySelector('.screen:not(.gone)'); if(!sc) return;
+  sx=t.clientX; sy=t.clientY; el=sc; const left=t.clientX-vp.getBoundingClientRect().left;
+  mode = left<28 && pushed() ? 'back' : sc.scrollTop<=0 ? 'pull?' : null; },{passive:true});
+ vp.addEventListener('touchmove',(e)=>{ if(!mode||!el) return; const t=e.touches[0], mx=t.clientX-sx, my=t.clientY-sy;
+  if(mode==='back'){ if(dx<8 && Math.abs(my)>Math.abs(mx)){ mode=null; return; } dx=Math.max(0,mx); el.style.transition='none'; el.style.transform=`translateX(${dx}px)`;
+   if(dx>BACK!==armed){ armed=dx>BACK; if(armed) haptic('light'); } return; }
+  if(mode==='pull?'){ if(my<6 || Math.abs(mx)>Math.abs(my) || el.scrollTop>0){ if(my<0||Math.abs(mx)>8) mode=null; return; } mode='pull'; }
+  if(mode==='pull'){ if(el.scrollTop>0){ reset(); return; } d=Math.min(120, Math.max(0,my)*0.45); el.style.transition='none'; el.style.transform=`translateY(${d}px)`;
+   ptr.style.transition='none'; ptr.style.opacity=Math.min(1,d/PULL); ptr.style.transform=`translateY(${d-44}px) rotate(${d*4}deg)`;
+   if(d>=PULL!==armed){ armed=d>=PULL; if(armed) haptic('light'); } } },{passive:true});
+ const end=async()=>{ if(!mode||!el) return reset();
+  if(mode==='back'){ const go=dx>BACK; el.style.transition=''; el.style.transform=''; mode=null; el=null; dx=0; armed=false; if(go) back(); return; }
+  if(mode==='pull' && d>=PULL){ busy=true; el.style.transition=''; el.style.transform='translateY(56px)'; ptr.style.transition=''; ptr.style.opacity='1'; ptr.style.transform='translateY(12px)'; ptr.classList.add('spin');
+   await sync(()=>refresh()); haptic('ok'); const sc=vp.querySelector('.screen:not(.gone)'); if(sc){ sc.style.transition=''; sc.style.transform=''; } ptr.classList.remove('spin'); ptr.style.opacity=''; ptr.style.transform=''; mode=null; el=null; d=0; armed=false; busy=false; return; }
+  reset(); };
+ vp.addEventListener('touchend',end); vp.addEventListener('touchcancel',reset);
 })();
 })();
 
