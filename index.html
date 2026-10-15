@@ -487,7 +487,7 @@ const lcFirst = (s) => s.charAt(0).toLowerCase()+s.slice(1);
 const tgUser = inTG && tg.initDataUnsafe && tg.initDataUnsafe.user;
 let MY_ID = tgUser ? tgUser.id : +(ls.get('mj-me') || 0);
 if (!MY_ID) { MY_ID = 900000000 + Math.floor(Math.random()*99999999); ls.set('mj-me', MY_ID); }
-const MY_NAME = tgUser ? (tgUser.first_name||'Вы') : 'Тестировщик';
+const MY_NAME = tgUser ? (tgUser.first_name||'Вы') : (ls.get('mj-name')||'Тестировщик');
 
 /* ================= СПРАВОЧНИКИ ================= */
 const STAGES = [
@@ -888,8 +888,9 @@ function sheetHTML(kind,data){
  if(kind==='demo') return `<div class="grab"></div><h3>Стенд</h3><div class="sm">Фон для показа.</div><div class="opts">${Object.entries(BGS).map(([k,v])=>`<button type="button" data-bg="${k}" aria-pressed="${st.bg===k}">${v}</button>`).join('')}</div>`;
  return '';
 }
-function openSheet(kind,data){ const sh=$('#sheet'); sh.innerHTML=sheetHTML(kind,data); sh.scrollTop=0; $('#scrim').classList.add('on'); requestAnimationFrame(()=>sh.classList.add('on')); haptic('light'); updateChrome(); }
-function closeSheet(){ $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); updateChrome(); }
+let sheetTok=0;
+function openSheet(kind,data){ const sh=$('#sheet'), tok=++sheetTok; sh.innerHTML=sheetHTML(kind,data); sh.scrollTop=0; $('#scrim').classList.add('on'); requestAnimationFrame(()=>{ if(tok===sheetTok) sh.classList.add('on'); }); haptic('light'); updateChrome(); }
+function closeSheet(){ sheetTok++; $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); updateChrome(); }
 const sheetOpen = () => $('#sheet').classList.contains('on');
 
 /* ================= НАВИГАЦИЯ ================= */
@@ -1060,7 +1061,7 @@ document.addEventListener('click',(e)=>{
 document.addEventListener('input',(e)=>{
  const t=e.target;
  if(t.id==='msrch'){ const q=t.value.toLowerCase().trim(); document.querySelectorAll('.screen:not(.gone):not(.under) .ord').forEach(r=>{ r.hidden = q && !r.textContent.toLowerCase().includes(q); }); }
- if(t.dataset.nf && st.newo){ st.newo[t.dataset.nf]=t.value; saveDraft(); }
+ if(t.dataset.nf && st.newo){ st.newo[t.dataset.nf]=t.value; saveDraft(); updateChrome(); }
 });
 document.addEventListener('change',(e)=>{ if(e.target.dataset.nf==='phone' && st.newo) refresh(); });
 $('#scrim').addEventListener('click',closeSheet);
