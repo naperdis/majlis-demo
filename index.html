@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+<title>MAJLIS Заказы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@400;500&display=swap">
+<style>
+/* MAJLIS v4: свет-фон + стекло только на «парящих» слоях (меню, шторки, тосты) ради скорости; две роли — покупатель и менеджер */
+:root{
+ color-scheme:dark;
+ --black:#04050B;--surf:rgba(13,16,34,.70);--surf2:rgba(255,255,255,.07);--line:rgba(255,255,255,.08);
+ --blue:#1E3BFF;--blue-soft:#A4B2FF;
+ --w:#FFFFFF;--w70:rgba(255,255,255,.72);--w50:rgba(255,255,255,.54);--w30:rgba(255,255,255,.32);
+ --alert:#FF8A6B;--warn:#FFC266;--ok:#35D07F;
+ --glass:rgba(16,19,40,.55);--hi:inset 0 .5px 0 rgba(255,255,255,.16),inset 0 0 0 .5px rgba(255,255,255,.07);
+ --blur:saturate(170%) blur(22px);
+ --disp:"Unbounded","Arial Black",sans-serif;--txt:"Onest",-apple-system,"Segoe UI",system-ui,sans-serif;
+ --ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.2,.9,.25,1.06);--t-fast:160ms;--t-med:300ms;
+ --r-dev:48px;--r-sheet:40px;--r-sheet-in:24px;--r-card:22px;--r-in:12px;
+}
+html,body{height:100%}
+body{background:#0E0F14;color:var(--w);font-family:var(--txt);-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1;margin:0}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;text-align:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:2px solid var(--blue-soft);outline-offset:2px;border-radius:12px}
+input{font:inherit;color:#fff}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* сцена */
+.stage{min-height:100%;display:flex;align-items:center;justify-content:center;gap:48px;padding:32px 16px}
+.device{--frame-sab:24px;--sab:max(env(safe-area-inset-bottom,0px),var(--frame-sab));width:390px;height:844px;border-radius:var(--r-dev);overflow:hidden;position:relative;background:var(--black);box-shadow:0 0 0 1px #2b2c33,0 40px 80px -30px #000;isolation:isolate;flex:none}
+.side{width:300px;flex:none}
+.side h1{font-family:var(--disp);font-weight:500;font-size:30px;letter-spacing:-.05em;line-height:.95;margin:0 0 10px}
+.side p{color:var(--w50);font-size:13.5px;line-height:1.5;margin:0 0 6px}
+.side .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--w50);margin:18px 0 8px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{padding:9px 12px;border-radius:999px;background:#1a1b25;font-size:13px}
+.opts button[aria-pressed="true"]{background:#fff;color:#0B0D18}
+.side .note{font-size:12px;color:var(--w50);line-height:1.5;margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:820px){.stage{padding:0;display:block}.device{--frame-sab:0px;width:100%;height:100vh;height:100dvh;border-radius:0;box-shadow:none}.side{display:none}}
+.tgmode .stage{padding:0;display:block}.tgmode .device{--frame-sab:0px;width:100%;height:100vh;height:var(--tg-viewport-stable-height,100dvh);border-radius:0;box-shadow:none}.tgmode .side{display:none}
+
+/* фон */
+.bg{position:absolute;inset:0;z-index:0;background:#04050B center top/cover no-repeat}
+.bg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,5,11,.05) 0%,transparent 30%,rgba(4,5,11,.55) 56%,#04050B 76%)}
+.grain{position:absolute;inset:0;z-index:1;opacity:.12;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.3 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+/* хром Telegram вне Telegram */
+.tgbar{position:relative;z-index:5;height:96px;padding:44px 14px 0;display:grid;grid-template-columns:96px 1fr 96px;align-items:center;font-family:-apple-system,system-ui,sans-serif}
+.tgbar .l{font-size:16px}
+.tgbar .t{text-align:center;line-height:1.15}.tgbar .t b{font-size:16px;font-weight:600;display:block}.tgbar .t span{font-size:12.5px;color:var(--w50)}
+.tgbar .m{justify-self:end;width:28px;height:28px;border-radius:50%;border:1.5px solid #fff;display:grid;place-items:center}
+.tgbar .m:before{content:"";width:3px;height:3px;border-radius:50%;background:#fff;box-shadow:-6px 0 #fff,6px 0 #fff}
+.tgmode .tgbar{display:none}
+@media (max-width:820px){.tgbar{padding-top:max(8px,env(safe-area-inset-top,0px));height:auto;padding-bottom:6px}}
+
+/* экраны */
+.viewport{position:absolute;left:0;right:0;top:96px;bottom:0;z-index:3;overflow:hidden}
+.tgmode .viewport{top:0}
+@media (max-width:820px){.viewport{top:58px}}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding-bottom:150px;scrollbar-width:none;contain:layout paint;transition:transform var(--t-med) var(--ease),opacity var(--t-med) var(--ease)}
+.screen::-webkit-scrollbar{display:none}
+.screen.enter{transform:translateX(100%)}.screen.leave{transform:translateX(-24%);opacity:0}
+.screen.back-leave{transform:translateX(100%)}.screen.back-enter{transform:translateX(-24%);opacity:0}
+/* появление блоков лесенкой */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.anim>*{animation:rise .46s var(--ease) both;animation-delay:calc(var(--i,0) * 38ms)}
+@keyframes datein{from{opacity:0;transform:translateY(18px) scale(.98);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+.anim .date{animation:datein .6s var(--ease) both;animation-delay:80ms}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* прогресс-бар: заливка идёт слева направо отрезок за отрезком, точка «сейчас» встаёт в конце */
+.anim .seg i.f:before,.anim .seg i.c:before{transform-origin:left;animation:grow .15s linear both;animation-delay:calc(260ms + var(--k,0) * 150ms)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.anim .seg i.c:after{animation:pop .35s var(--spring) both,pulse 2.2s ease-in-out infinite;animation-delay:calc(260ms + (var(--k,0) + 1) * 150ms),calc(900ms + var(--k,0) * 150ms)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(255,255,255,.22)}50%{box-shadow:0 0 0 7px rgba(255,255,255,.08)}}
+.seg i.c:after{animation:pulse 2.2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.screen,.sheet,.scrim,.toast,.tabs{transition:none!important}.anim>*,.anim .date,.anim .seg i:before,.anim .seg i:after,.seg i.c:after,.spin,.stg.cur .dot{animation:none!important}}
+
+/* стекло — только парящие слои */
+.glass{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--hi)}
+.surf{background:var(--surf);box-shadow:var(--hi)}
+.tabs{position:absolute;left:10px;right:10px;bottom:calc(10px + var(--sab));z-index:6;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);padding:6px;transition:transform var(--t-med) var(--ease),opacity var(--t-med) var(--ease)}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:var(--w50);padding:7px 0 6px;border-radius:999px;transition:color var(--t-fast),background var(--t-fast)}
+.tabs button[aria-current="page"]{color:#fff;background:rgba(255,255,255,.10)}
+.tabs button:active .ic{transform:scale(.86)}
+.tabs .ic{transition:transform var(--t-fast) var(--spring)}
+.tabs .dotn{position:absolute;margin:-2px 0 0 14px;width:7px;height:7px;border-radius:50%;background:var(--alert)}
+.no-tabs .tabs{transform:translateY(160%);opacity:0;pointer-events:none}
+.mainbtn{position:absolute;left:0;right:0;bottom:0;z-index:7;padding:10px 10px calc(10px + var(--sab));background:linear-gradient(transparent,rgba(4,5,11,.9) 38%)}
+.mainbtn button{width:100%;height:54px;border-radius:27px;background:#fff;color:#0B0D18;font-size:16px;font-weight:600;text-align:center;transition:transform var(--t-fast) var(--ease)}
+.mainbtn button:active{transform:scale(.98)}
+.tgmode .mainbtn{display:none}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#fff;z-index:9}
+@media (max-width:820px){.homebar{display:none}}.tgmode .homebar{display:none}
+
+/* шапка и герой */
+.hd{display:flex;align-items:center;gap:10px;padding:6px 18px 0}
+.ava{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:14px;font-weight:500;flex:none;position:relative}
+.ava.m{background:#E7E9F5;color:#0B0D18;font-weight:600}
+.ava.on:after{content:"";position:absolute;right:-1px;bottom:0;width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 2.5px #172690}
+.hd .nm{font-size:16px;font-weight:500;display:flex;align-items:center;gap:2px}
+.hd .nm .ic{width:15px;height:15px;color:var(--w50)}
+.hd .r{margin-left:auto}
+.back{display:flex;align-items:center;gap:2px;font-size:15px;color:var(--w70);padding:8px 14px 0}
+.tgmode .back{display:none}
+.kick{font-size:14px;color:var(--w70);margin:40px 18px 0}
+.date{font-family:var(--disp);font-weight:500;letter-spacing:-.055em;line-height:.9;margin:10px 18px 0;font-size:70px}
+.date small{font-size:32px;letter-spacing:-.04em;color:var(--w70)}
+.date.long{font-size:50px;line-height:.95}
+.date.amt{font-size:52px;white-space:nowrap}
+.exp{font-size:12px;color:var(--w50);margin:8px 18px 0}
+.st{display:flex;align-items:center;gap:8px;margin:14px 18px 0;font-size:14px;color:var(--w70);flex-wrap:wrap}
+.pill{font-size:12.5px;font-weight:500;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.14);color:#fff;display:inline-flex;align-items:center;gap:5px}
+.pill .ic{width:13px;height:13px;stroke-width:2}
+.pill.alert{background:rgba(255,138,107,.18);color:var(--alert)}
+.pill.warn{background:rgba(255,194,102,.16);color:var(--warn)}
+.pill.w{background:#fff;color:#0B0D18}
+.pill.ok{background:rgba(53,208,127,.16);color:#7BE5AC}
+.pill.info{background:rgba(164,178,255,.16);color:#C3CCFF}
+.seg{display:flex;gap:4px;margin:18px 18px 0}
+.seg i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.22);position:relative}
+/* серая дорожка видна всегда, белая заливка — слой поверх */
+.seg i.f:before,.seg i.c:before{content:"";position:absolute;inset:0;border-radius:2px;background:#fff}
+.seg i.c:after{content:"";position:absolute;right:-2px;top:-3px;width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.22)}
+.segl{display:flex;justify-content:space-between;margin:9px 18px 0;font-size:12px;color:var(--w50)}
+.segl b{color:#fff;font-weight:500}
+.prog{display:block;width:100%;padding:0 0 4px;border-radius:14px;transition:transform var(--t-fast) var(--ease)}
+.prog:active{transform:scale(.985)}
+.prog .segl .go{color:var(--blue-soft);display:inline-flex;align-items:center;gap:2px}
+.prog .segl .go .ic{width:13px;height:13px}
+.kickb{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--w70);margin:40px 18px 0;padding:0}
+.kickb .ic{width:15px;height:15px;color:var(--blue-soft)}
+.kickb em{font-style:normal;color:var(--blue-soft)}
+/* плашки состояния: цвет говорит раньше текста */
+.note{display:flex;align-items:center;gap:10px;margin:16px 12px 0;padding:9px 14px 9px 9px;border-radius:16px;font-size:13.5px;line-height:1.3;width:calc(100% - 24px);text-align:left}
+.note .ni{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none}
+.note .ni .ic{width:15px;height:15px;stroke-width:2.2}
+.note b{font-weight:600}
+.note.ok{background:rgba(53,208,127,.15);color:#C4F5DA}.note.ok .ni{background:#35D07F;color:#03230F}
+.note.warn{background:rgba(255,194,102,.15);color:#FFE6BD}.note.warn .ni{background:#FFC266;color:#3A2500}
+.note.alert{background:rgba(255,99,82,.17);color:#FFD3CB}.note.alert .ni{background:#FF6352;color:#fff}
+.note.info{background:rgba(164,178,255,.15);color:#DDE3FF}.note.info .ni{background:#A4B2FF;color:#0B1550}
+.note.mute{background:rgba(255,255,255,.08);color:var(--w70)}.note.mute .ni{background:rgba(255,255,255,.18);color:#fff}
+.sd{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.sd.ok{background:#35D07F}.sd.warn{background:#FFC266}.sd.alert{background:#FF6352}.sd.info{background:#A4B2FF}.sd.mute{background:rgba(255,255,255,.35)}
+
+/* карточки, списки, кнопки */
+.card{border-radius:var(--r-card);margin:8px 12px 0;padding:15px 16px;display:block;width:calc(100% - 24px);text-align:left}
+.card.first{margin-top:24px}
+button.card,.row,.cat,.btg,.pbtn,.chip{transition:transform var(--t-fast) var(--ease),background var(--t-fast)}
+button.card:active,.cat:active,.btg:active,.pbtn:active,.chip:active{transform:scale(.98)}
+.pl{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--w50);gap:10px}
+.pl b{color:#fff;font-weight:500}
+.pv{font-size:15.5px;font-weight:500;margin-top:5px;line-height:1.3}
+.sm{font-size:12.5px;color:var(--w50);line-height:1.45;margin-top:6px}
+.sep{height:1px;background:var(--line);margin:12px 0}
+.nx{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.dv{font-family:var(--disp);font-weight:500;font-size:16px;letter-spacing:-.03em;white-space:nowrap}
+.sec{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--w50);margin:24px 18px 8px}
+.list{margin:0 12px;border-radius:var(--r-card);padding:2px 16px;display:block}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;width:100%;text-align:left}
+.row+.row,.accb+.row{border-top:1px solid var(--line)}
+.th{width:42px;height:42px;border-radius:var(--r-in);background:var(--surf2);display:grid;place-items:center;color:var(--w70);flex:none;position:relative}
+.th em{position:absolute;right:-5px;bottom:-5px;font-style:normal;font-size:10px;font-weight:600;background:#fff;color:#0B0D18;border-radius:9px;padding:1px 5px}
+.row .tx{flex:1;min-width:0}.row .tx b{display:block;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row .tx span{display:block;font-size:12.5px;color:var(--w50);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .r{font-family:var(--disp);font-size:14px;font-weight:500;letter-spacing:-.03em;text-align:right;white-space:nowrap}
+.row .r small{display:block;font-family:var(--txt);font-size:12px;letter-spacing:0;color:var(--blue-soft);font-weight:500;margin-top:3px}
+.row .r.mute{color:var(--w50)}
+.row>.ic{color:var(--w30);transition:transform var(--t-fast) var(--ease)}
+.row[aria-expanded="true"]>.ic{transform:rotate(90deg)}
+.mrow{display:flex;align-items:center;gap:12px}
+.mrow .tx{flex:1;min-width:0}.mrow .tx b{display:block;font-size:15px;font-weight:500}.mrow .tx span{font-size:12.5px;color:var(--w50)}
+.btg{height:50px;border-radius:var(--r-card);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:500;width:calc(100% - 24px);margin:8px 12px 0}
+.pbtn{height:54px;border-radius:27px;background:#fff;color:#0B0D18;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;width:calc(100% - 24px);margin:18px 12px 0}
+.num{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);font-size:13px;letter-spacing:-.01em;padding:7px 12px;border-radius:999px}
+.num .ic{width:15px;height:15px}
+.ptitle{font-family:var(--disp);font-weight:500;font-size:44px;letter-spacing:-.05em;line-height:.95;margin:40px 18px 0}
+.psub{font-size:14px;color:var(--w70);margin:12px 18px 0;line-height:1.45;max-width:330px}
+.spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;animation:sp .9s linear infinite;margin:60px 18px 0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.trkrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+.trkno{font-family:var(--disp);font-weight:500;font-size:18px;letter-spacing:-.01em;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.icb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.10);transition:background var(--t-fast),transform var(--t-fast) var(--spring)}
+.icb:active{background:rgba(255,255,255,.2);transform:scale(.9)}
+.icb .ic{width:18px;height:18px}
+.icb.w{background:#fff;color:#0B0D18}
+.more{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;color:var(--blue-soft)}
+.more .ic{width:16px;height:16px;transition:transform var(--t-fast) var(--ease)}
+.more[aria-expanded="true"] .ic{transform:rotate(90deg)}
+.accb{padding:0 0 12px 54px;animation:rise .3s var(--ease) both}
+.dl{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13.5px;color:var(--w50);padding:6px 0}
+.dl b{color:#fff;font-weight:500;white-space:nowrap}
+.dl small{display:block;font-size:12px;color:var(--w30);margin-top:2px}
+.accb .trkrow{margin:0 0 4px}
+.lnk{display:block;width:100%;text-align:center;font-size:13.5px;color:var(--w50);padding:14px 18px 4px}
+.tag{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue-soft);margin:10px 18px 0}
+
+/* рейка этапов */
+.rail{margin:8px 12px 0;border-radius:var(--r-card);padding:8px 16px 6px}
+.stg{display:grid;grid-template-columns:22px 1fr auto;gap:12px;padding:11px 0;position:relative}
+.stg .dot{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--w30);margin:4px 0 0 5px;background:#0d1024;position:relative;z-index:1}
+.stg.done .dot{background:#fff;border-color:#fff}
+.stg.cur .dot{width:15px;height:15px;margin:2px 0 0 3px;border:3px solid #fff;background:var(--blue);animation:pulse 2.2s ease-in-out infinite}
+.stg:not(:last-child):before{content:"";position:absolute;left:10px;top:24px;bottom:-12px;width:1.5px;background:rgba(255,255,255,.14)}
+.stg.done:not(:last-child):before{background:#fff}
+.stg .tt{font-size:15px;font-weight:500;line-height:1.3}
+.stg.fut .tt{color:var(--w50);font-weight:400}
+.stg .sub{font-size:12.5px;color:var(--w50);margin-top:3px;line-height:1.4}
+.stg.cur .sub{color:var(--blue-soft)}
+.stg .dt{font-size:12.5px;color:var(--w50);text-align:right;padding-top:2px;white-space:nowrap}
+.stg.done .dt{color:var(--w70)}
+.proof{display:flex;align-items:center;gap:10px;margin-top:9px;padding:9px 10px;border-radius:var(--r-in);background:var(--surf2);font-size:13px;width:100%;text-align:left}
+.proof .pi{width:34px;height:34px;border-radius:8px;flex:none;background:linear-gradient(135deg,#25306b,#0d1230)}
+.proof span{flex:1;min-width:0}.proof small{display:block;color:var(--w50);font-size:11.5px}
+
+/* шторка */
+.scrim{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity var(--t-med) var(--ease)}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:21;border-radius:var(--r-sheet);padding:10px 16px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(110%);transition:transform .42s var(--spring);max-height:88%;overflow-y:auto;background:rgba(18,21,44,.82)}
+.sheet.on{transform:none}
+.grab{width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin:0 auto 14px}
+.sheet h3{font-family:var(--disp);font-weight:500;font-size:22px;letter-spacing:-.04em;margin:4px 2px 6px;line-height:1.05}
+.sheet .sm{margin:0 2px 14px}
+.sheet .card,.sheet .list{border-radius:var(--r-sheet-in);margin-left:0;margin-right:0;width:100%}
+.opt{display:flex;align-items:center;gap:12px;width:100%;padding:14px;border-radius:var(--r-sheet-in);background:var(--surf2);margin-top:8px;text-align:left;border:1.5px solid transparent}
+.opt[aria-checked="true"]{border-color:#fff}
+.opt .tx{flex:1}.opt .tx b{display:block;font-size:15px;font-weight:500}.opt .tx span{font-size:12.5px;color:var(--w50)}
+.radio{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--w30);flex:none}
+.opt[aria-checked="true"] .radio{border:6px solid #fff}
+.sbtn{width:100%;height:54px;border-radius:27px;background:#fff;color:#0B0D18;font-size:16px;font-weight:600;margin-top:16px;text-align:center}
+.sbtn.ghost{background:var(--surf2);color:#fff;margin-top:8px}
+.photo{height:220px;border-radius:var(--r-sheet-in);background:radial-gradient(120% 90% at 70% 20%,#3a4ccf,#121845 55%,#0a0d22);display:grid;place-items:end start;padding:14px;font-size:12px;color:var(--w70);margin:6px 0 4px}
+.sheet textarea{width:100%;min-height:84px;margin-top:10px;border-radius:var(--r-sheet-in);background:var(--surf2);border:0;color:#fff;font:15px/1.45 var(--txt);padding:12px 14px;resize:none;outline:none}
+.sheet textarea::placeholder{color:var(--w30)}
+.msg{border-radius:18px 18px 18px 6px;background:#1b2140;padding:12px 14px;font-size:14px;line-height:1.45;margin-top:8px}
+.msg b{font-weight:600}
+.msg .mb{display:block;margin-top:10px;padding:9px;border-radius:10px;background:rgba(255,255,255,.1);text-align:center;font-size:13.5px;font-weight:500;color:var(--blue-soft)}
+.field{display:block;margin-top:10px}
+.field span{display:block;font-size:12px;color:var(--w50);margin:0 2px 6px}
+.field input{width:100%;height:48px;border-radius:14px;background:var(--surf2);border:0;padding:0 14px;outline:none}
+
+/* менеджер (вкладка покупателя) */
+.mhero{display:flex;flex-direction:column;align-items:center;text-align:center;margin:34px 18px 0}
+.mhero .ava{width:88px;height:88px;font-size:32px}
+.mhero .ava.on:after{width:16px;height:16px;right:3px;bottom:3px;box-shadow:0 0 0 4px #13238a}
+.mhero h2{font-family:var(--disp);font-weight:500;font-size:32px;letter-spacing:-.05em;margin:16px 0 6px}
+.mhero p{margin:0;font-size:14px;color:var(--w70);line-height:1.45}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 12px 2px;margin-top:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:10px 14px;border-radius:999px;background:var(--surf);box-shadow:var(--hi);font-size:14px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:#fff;color:#0B0D18}
+.chip b{font-weight:600;margin-left:4px;opacity:.6}
+
+/* каталог */
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:22px 12px 0}
+.cat{border-radius:var(--r-card);padding:6px 6px 12px;display:flex;flex-direction:column;text-align:left}
+.cat .im{aspect-ratio:1/1;border-radius:16px;background:#fff;display:grid;place-items:center;overflow:hidden;max-width:100%}
+.cat .im img{width:86%;height:86%;object-fit:contain;transition:transform .5s var(--ease)}
+.cat:hover .im img{transform:scale(1.04)}
+.cat .ct{padding:10px 8px 0}
+.cat b{font-size:15px;font-weight:500;display:block}.cat span{font-size:12.5px;color:var(--w50)}
+.cat .pr{font-family:var(--disp);font-size:13px;letter-spacing:-.02em;color:#fff;margin-top:6px;display:block}
+.cat.wide{grid-column:span 2;flex-direction:row;align-items:center;gap:12px;padding:12px 14px}
+
+/* профиль и календарь */
+.who{display:flex;align-items:center;gap:14px;margin:26px 18px 0}
+.who .ava{width:56px;height:56px;font-size:20px}
+.who b{display:block;font-size:17px;font-weight:500}.who span{font-size:13px;color:var(--w70)}
+.tog{width:44px;height:26px;border-radius:13px;background:rgba(255,255,255,.14);position:relative;flex:none;transition:background var(--t-fast)}
+.tog:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform var(--t-fast) var(--spring)}
+.tog[aria-checked="true"]{background:var(--blue)}.tog[aria-checked="true"]:after{transform:translateX(18px)}
+.cal{padding:14px 12px 12px}
+.cal .ch{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 10px}
+.cal .ch b{font-family:var(--disp);font-weight:500;font-size:17px;letter-spacing:-.03em}
+.cal .ch span{font-size:12.5px;color:var(--w50)}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px 0;text-align:center}
+.cg .wd{font-size:11px;color:var(--w30);padding-bottom:6px}
+.cg .d{height:36px;display:grid;place-items:center;font-size:13.5px;position:relative;color:var(--w70)}
+.cg .d.mu{color:var(--w30)}
+.cg .d.rng{background:rgba(30,59,255,.38);color:#fff}
+.cg .d.rs{border-radius:18px 0 0 18px}.cg .d.re{border-radius:0 18px 18px 0}
+.cg .d.today span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)}
+.cg .d.pick span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#0B0D18;font-weight:600}
+.cg .d.got:after{content:"";position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--ok)}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 4px 2px;font-size:12px;color:var(--w50)}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* пульт менеджера */
+.mtop{display:flex;align-items:center;gap:10px;padding:8px 18px 0}
+.mtop .ttl{font-size:13px;color:var(--w70)}.mtop .ttl b{display:block;font-size:16px;color:#fff;font-weight:500}
+.srch{display:flex;align-items:center;gap:8px;margin:18px 12px 0}
+.srch .in{flex:1;height:48px;border-radius:999px;display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--w50);font-size:14.5px}
+.srch .in input{flex:1;background:none;border:0;outline:none;font-size:14.5px;min-width:0}
+.srch .in input::placeholder{color:var(--w50)}
+.srch .icb{width:48px;height:48px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 12px 0}
+.kpi{border-radius:18px;padding:12px}
+.kpi b{display:block;font-family:var(--disp);font-weight:500;font-size:22px;letter-spacing:-.04em}
+.kpi span{font-size:11.5px;color:var(--w50);line-height:1.3;display:block;margin-top:4px}
+.grp{margin:8px 12px 0;border-radius:var(--r-card);padding:12px 14px 4px}
+.grp .gh{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;padding-bottom:4px}
+.grp .gh i{width:8px;height:8px;border-radius:50%;flex:none}
+.grp .gh .ni .ic{width:14px;height:14px;stroke-width:2.2}
+.grp .prow{border-top-color:rgba(255,255,255,.07)}
+.grp .gh em{font-style:normal;margin-left:auto;font-family:var(--disp);font-size:13px}
+.prow{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);width:100%;text-align:left}
+.prow .tx{flex:1;min-width:0}.prow .tx b{display:block;font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.prow .tx span{display:block;font-size:12.5px;color:var(--w50);margin-top:2px}
+.prow .act{flex:none;height:34px;padding:0 13px;border-radius:999px;background:#fff;color:#0B0D18;font-size:13px;font-weight:600;display:inline-flex;align-items:center}
+.ord{display:block;width:100%;text-align:left;padding:13px 0;border-top:1px solid var(--line)}
+.list .ord:first-child{border-top:0}
+.ord .l1{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--w50)}
+.ord .l1 b{color:#fff;font-weight:500;font-size:14.5px}
+.ord .l2{display:flex;justify-content:space-between;gap:10px;margin-top:3px;font-size:13.5px;color:var(--w70)}
+.ord .l2 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ord .l2 .dv{font-size:14px;color:#fff}
+.ord .l3{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+.ord .l3 .pill{font-size:11.5px;padding:4px 9px}
+.ord .l3 .upd{margin-left:auto;font-size:11.5px;color:var(--w30)}
+.ord.over .l2 .dv{color:var(--alert)}
+.seclink{color:var(--blue-soft);font-size:11px;letter-spacing:.08em}
+.pipe{padding:4px 16px}
+.pr{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:4px 10px;width:100%;text-align:left;padding:11px 0 10px;border-top:1px solid var(--line)}
+.pipe .pr:first-child{border-top:0}
+.pr .pt{font-size:14px;color:var(--w70)}
+.pr .pt em{font-style:normal;font-size:12px;color:var(--alert);margin-left:8px}
+.pr b{font-family:var(--disp);font-weight:500;font-size:15px;letter-spacing:-.03em}
+.pr .pb{grid-column:1/-1;height:3px;border-radius:2px;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
+.pr .pb i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:rgba(255,255,255,.7)}
+.pr:active{opacity:.7}
+.bulk{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 12px 8px;padding:8px 8px 8px 16px;border-radius:999px;font-size:14px}
+.bulk .act{height:38px;padding:0 16px;border-radius:999px;background:#fff;color:#0B0D18;font-weight:600;font-size:13.5px}
+.bulk .act[disabled]{opacity:.35}
+.ord.sel{padding-left:36px;position:relative}
+.ord .ck{position:absolute;left:0;top:15px;width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--w30);display:grid;place-items:center}
+.ord.sel.on .ck{background:#fff;color:#0B0D18;box-shadow:none}
+.ord .ck .ic{width:14px;height:14px;stroke-width:2.4}
+.stepper{display:inline-flex;align-items:center;gap:10px}
+.stepper button{width:32px;height:32px;border-radius:50%;background:var(--surf2);font-size:18px;line-height:1;display:grid;place-items:center}
+.stepper b{font-family:var(--disp);font-weight:500;font-size:14px;min-width:44px;text-align:center}
+.mstat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:20px 12px 0}
+.mstat .card{margin:0;width:100%}
+.hist{padding:4px 16px}
+.hi{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:10px 0;font-size:13px;border-top:1px solid var(--line)}
+.hi:first-child{border:0}
+.hi .t{color:var(--w50);font-size:12px}
+.hi b{font-weight:500}
+.hi span{color:var(--w50)}
+.pos{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 0;border-top:1px solid var(--line)}
+.pos:first-child{border:0}
+.pos b{font-weight:500;font-size:14.5px}.pos small{color:var(--w50);font-size:12.5px}
+.pos .q{font-family:var(--disp);font-size:14px;text-align:right}
+.seg2{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surf2);margin-top:10px}
+.seg2 button{flex:1;height:38px;border-radius:999px;font-size:14px;color:var(--w70)}
+.seg2 button[aria-pressed="true"]{background:#fff;color:#0B0D18;font-weight:500}
+.saved{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--w50)}
+.saved i{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.found{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(53,208,127,.10);font-size:13px;color:#9BE9BF}
+
+/* тост и прелоадер */
+.toast{position:absolute;left:50%;top:110px;z-index:30;transform:translate(-50%,-20px);opacity:0;padding:11px 16px;border-radius:16px;font-size:14px;font-weight:500;transition:all var(--t-med) var(--spring);pointer-events:none;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.tgmode .toast{top:16px}
+.pre{position:absolute;inset:0;z-index:60;background:#04050B;transition:opacity .45s var(--ease)}
+.pre canvas{position:absolute;inset:0;width:100%;height:100%}
+.pre.out{opacity:0;pointer-events:none}
+.pre .skip{position:absolute;bottom:calc(30px + var(--sab));left:0;right:0;text-align:center;font-size:12px;color:var(--w30);opacity:0}
+.pre .logo{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;opacity:0}
+.pre .logo b{display:block;font-family:var(--disp);font-weight:500;font-size:34px;letter-spacing:.32em;padding-left:.32em;color:#fff}
+.pre .logo span{display:block;margin-top:12px;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.55);opacity:0}
+@keyframes logoin{from{opacity:0;filter:blur(10px);letter-spacing:.6em}to{opacity:1;filter:blur(0);letter-spacing:.32em}}
+@keyframes fadein{to{opacity:1}}
+.pre.play .logo{animation:fadein .01s 700ms both}
+.pre.play .logo b{animation:logoin 1.3s var(--ease) 700ms both}
+.pre.play .logo span{animation:fadein .8s var(--ease) 1500ms both}
+.pre.play .skip{animation:fadein .6s 1200ms both}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+ <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+ <symbol id="i-home" viewBox="0 0 24 24"><path d="M4.5 10.5 12 4.5l7.5 6V19.5h-15v-9Z"/></symbol>
+ <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.5"/></symbol>
+ <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-4.5 3.5V6.5Z"/></symbol>
+ <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5.5 19.5c.8-3.2 3.3-5 6.5-5s5.7 1.8 6.5 5"/></symbol>
+ <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V7a2.5 2.5 0 0 0-2.5-2.5H7A2.5 2.5 0 0 0 4.5 7v6A2.5 2.5 0 0 0 7 15.5h1.5"/></symbol>
+ <symbol id="i-game" viewBox="0 0 24 24"><path d="M7.5 8.5h9a3.5 3.5 0 0 1 3.5 4l-.5 3a2.2 2.2 0 0 1-3.8 1l-1.4-1.5h-4.6l-1.4 1.5a2.2 2.2 0 0 1-3.8-1l-.5-3a3.5 3.5 0 0 1 3.5-4Z"/></symbol>
+ <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="3.5" width="10" height="17" rx="2.5"/><path d="M11 17.5h2"/></symbol>
+ <symbol id="i-pods" viewBox="0 0 24 24"><path d="M8.5 4.5a2.5 2.5 0 0 0-2.5 2.5v1.5a2.5 2.5 0 0 0 2.5 2.5v9M15.5 4.5A2.5 2.5 0 0 1 18 7v1.5a2.5 2.5 0 0 1-2.5 2.5v9"/></symbol>
+ <symbol id="i-vac" viewBox="0 0 24 24"><path d="M9.5 4.5h5v5l-1.5 10h-2l-1.5-10v-5Z"/></symbol>
+ <symbol id="i-cam" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="12" cy="13" r="3"/><path d="M9 7l1.5-2.5h3L15 7"/></symbol>
+ <symbol id="i-lap" viewBox="0 0 24 24"><rect x="5" y="5.5" width="14" height="10" rx="1.5"/><path d="M3 18.5h18"/></symbol>
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+ <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 5 6.5v5c0 4.2 3 7.6 7 9 4-1.4 7-4.8 7-9v-5l-7-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+ <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8M17 14v5H5V7h5"/></symbol>
+ <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4.5" y="5.5" width="15" height="14" rx="2.5"/><path d="M4.5 10h15M9 3.5v4M15 3.5v4"/></symbol>
+ <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+ <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m19.5 19.5-4-4"/></symbol>
+ <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3.5 5.5 13.5H12l-1 7 7.5-10H12l1-7Z"/></symbol>
+ <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 7h10.5M9 12h10.5M9 17h10.5M4.5 7h.5M4.5 12h.5M4.5 17h.5"/></symbol>
+ <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+ <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/></symbol>
+ <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></symbol>
+ <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 7.5v5.5M12 16.5v.5"/><circle cx="12" cy="12" r="8.5"/></symbol>
+ <symbol id="i-box" viewBox="0 0 24 24"><path d="M4.5 8 12 4.5 19.5 8v8L12 19.5 4.5 16V8Z"/><path d="M4.5 8 12 11.5 19.5 8M12 11.5v8"/></symbol>
+ <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3.5 6.5h10v9h-10zM13.5 9.5h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></symbol>
+</svg>
+
+<div class="stage">
+ <div class="device" id="device">
+  <div class="bg" id="bg"></div><div class="grain"></div>
+  <div class="tgbar"><button class="l" id="tgClose" type="button">Закрыть</button><div class="t"><b>MAJLIS</b><span>мини-приложение</span></div><span class="m" aria-hidden="true"></span></div>
+  <div class="viewport" id="vp"></div>
+  <nav class="tabs glass" id="tabs" aria-label="Разделы"></nav>
+  <div class="mainbtn" id="mainbtn" hidden><button type="button" id="mainbtnBtn"></button></div>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet glass" id="sheet" role="dialog" aria-modal="true"></div>
+  <div class="toast glass" id="toast" role="status"></div>
+  <div class="pre" id="pre" hidden><canvas id="preCv"></canvas><div class="logo"><b>MAJLIS</b><span>техника из США</span></div><div class="skip">нажмите, чтобы пропустить</div></div>
+  <div class="homebar" aria-hidden="true"></div>
+ </div>
+ <aside class="side">
+  <h1>MAJLIS<br>заказы</h1>
+  <p>Прототип по ТЗ v1.0: кабинет покупателя и пульт менеджера. Данные демонстрационные, фото товаров — сгенерированные заглушки.</p>
+  <div class="lbl">Роль</div><div class="opts" id="roleOpts"></div>
+  <div class="lbl">Ситуация покупателя</div><div class="opts" id="scnOpts"></div>
+  <div class="lbl">Фон</div><div class="opts" id="bgOpts"></div>
+  <div class="opts" style="margin-top:14px"><button type="button" id="replayPre">Показать заставку</button></div>
+  <div class="note">В Telegram: родные главная кнопка, «Назад», вибрация, открытие ссылок. На вкладках — только наше меню, на вложенных экранах — только кнопка Telegram.</div>
+ </aside>
+</div>
+
+<script>
+(function(){
+/* ================= НАСТРОЙКИ СТЕНДА ================= */
+const SB_URL = 'https://ymqmvspcuourorrpitag.supabase.co';
+const SB_KEY = 'sb_publishable_4dWG3EyEIS6rKz0u_OvfWg_s_dnomvD'; // публичный ключ приложения (не секрет)
+const BOT_APP = 'https://t.me/majlis_demo_bot/app';             // заменить на реальный адрес мини-аппа тестового бота
+const POLL_MS = 5000;
+
+/* ================= TELEGRAM ================= */
+const tg = window.Telegram && window.Telegram.WebApp;
+const inTG = !!(tg && tg.initData !== undefined && tg.platform && tg.platform !== 'unknown');
+if (inTG) { document.documentElement.classList.add('tgmode'); try { tg.ready(); tg.expand(); tg.setHeaderColor('#0B1550'); tg.setBackgroundColor('#04050B'); if (tg.setBottomBarColor) tg.setBottomBarColor('#04050B'); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e){} }
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ls = { get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
+const ss = { get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} } };
+const haptic = (t) => { if (typeof st!=='undefined' && st.hapticOn===false) return; if (inTG && tg.HapticFeedback) { try { t==='sel' ? tg.HapticFeedback.selectionChanged() : t==='ok' ? tg.HapticFeedback.notificationOccurred('success') : t==='warn' ? tg.HapticFeedback.notificationOccurred('warning') : tg.HapticFeedback.impactOccurred(t||'light'); } catch(e){} } else if (navigator.vibrate && !RM && navigator.userActivation && navigator.userActivation.hasBeenActive) { try{ navigator.vibrate(t==='ok'?[12,40,18]:t==='sel'?6:10); }catch(e){} } };
+const $ = (s) => document.querySelector(s);
+const I = (id) => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+const esc = (s) => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = (n) => new Intl.NumberFormat('ru-RU').format(Math.round(n||0)) + ' ₽';
+const plural = (n,a,b,c) => { const m10=n%10, m100=n%100; return m10===1&&m100!==11?a: m10>=2&&m10<=4&&(m100<12||m100>14)?b:c; };
+const lcFirst = (s) => s.charAt(0).toLowerCase()+s.slice(1);
+
+/* кто я: Telegram-пользователь или тестировщик в браузере */
+const tgUser = inTG && tg.initDataUnsafe && tg.initDataUnsafe.user;
+let MY_ID = tgUser ? tgUser.id : +(ls.get('mj-me') || 0);
+if (!MY_ID) { MY_ID = 900000000 + Math.floor(Math.random()*99999999); ls.set('mj-me', MY_ID); }
+const MY_NAME = tgUser ? (tgUser.first_name||'Вы') : 'Тестировщик';
+
+/* ================= СПРАВОЧНИКИ ================= */
+const STAGES = [
+ {t:'Выкуплен в США',plan:'1–3 дн',proof:['Чек магазина в США','загружает менеджер']},
+ {t:'На складе в США',plan:'2–5 дн',proof:['Фото коробки и серийник','загружает менеджер']},
+ {t:'Отправлен из США',plan:'1–3 дн',proof:['Авианакладная','номер отправки']},
+ {t:'В транзитной стране',plan:'3–6 дн'},
+ {t:'Отправлен в Россию',plan:'1–3 дн'},
+ {t:'В Москве',plan:'2–5 дн'},
+ {t:'Передан в СДЭК',plan:'1 дн'},
+ {t:'Получен',plan:'—'}
+];
+const N = STAGES.length;
+const SHORT = ['Выкуп','Склад США','Из США','Транзит','В Россию','Москва','СДЭК','Получен'];
+const where = (r) => `${SHORT[r.stage]} · ${r.stage+1} из ${N}`;
+const MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+const MONTHS_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const QUICK = ['Где сейчас заказ?','Можно быстрее?','Изменить получателя','Вопрос по оплате','Гарантия'];
+const BGS = {light:'Свет',satin:'Сатин',ribbon:'Стекло'};
+const NOTIF = [['Оплата получена','Оплата получена, заказ {no} в работе. Выкупим в США в ближайшие дни.'],['Новый этап','Заказ {no}: новый этап «{stage}». Ожидаемый срок — {eta}.'],['Срок изменился','Срок поставки заказа {no} изменился: {eta} (было {old}). Причина: {reason}.'],['Появился трек','По заказу {no} появился трек СДЭК: {track}.'],['Можно забирать','Заказ {no} ждёт вас в пункте СДЭК до {until}.'],['Заказ отменён','Заказ {no} отменён. {refund}']];
+const ICONS = [[/playstation|xbox|switch|dualsense|nintendo/i,'game'],[/iphone|чехол|watch/i,'phone'],[/airpods|наушник/i,'pods'],[/dyson|airwrap/i,'vac'],[/macbook|ноутбук|ipad/i,'lap'],[/gopro|sony|камер|dji|insta/i,'cam']];
+const iconFor = (items) => { const n=(items[0]||{}).n||''; for(const [re,ic] of ICONS) if(re.test(n)) return ic; return 'box'; };
+
+/* ================= ДАТЫ ================= */
+const D = (s) => s ? new Date(s) : null;
+const today0 = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
+const dd = (d) => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}`;
+function ago(s){ const d=D(s); if(!d) return ''; const m=Math.round((Date.now()-d)/60000); if(m<1) return 'только что'; if(m<60) return `${m} мин назад`; const h=Math.round(m/60); if(h<24) return `${h} ч назад`; const t0=today0(); const y=new Date(t0); y.setDate(y.getDate()-1); if(d>=y) return 'вчера '+d.toTimeString().slice(0,5); return dd(d); }
+function etaParts(r){ const a=D(r.eta_from), b=D(r.eta_to); if(!b) return ['—','']; if(!a||a.getTime()===b.getTime()) return [String(b.getDate()), MONTHS[b.getMonth()]]; if(a.getMonth()===b.getMonth()) return [`${a.getDate()}–${b.getDate()}`, MONTHS[b.getMonth()]]; return [`${dd(a)}–${dd(b)}`,'']; }
+function etaText(r){ const a=D(r.eta_from), b=D(r.eta_to); if(!b) return '—'; if(!a||a.getTime()===b.getTime()) return `${b.getDate()} ${MONTHS_FULL[b.getMonth()]}`; if(a.getMonth()===b.getMonth()) return `${a.getDate()}–${b.getDate()} ${MONTHS_FULL[b.getMonth()]}`; return `${a.getDate()} ${MONTHS[a.getMonth()]} – ${b.getDate()} ${MONTHS[b.getMonth()]}`; }
+const etaShort = (r) => { const p=etaParts(r); return p[1]?`${p[0]} ${p[1]}`:p[0]; };
+
+/* ================= API ================= */
+async function api(path, opts={}){
+ const res = await fetch(`${SB_URL}/rest/v1/${path}`, Object.assign({}, opts, {headers:Object.assign({apikey:SB_KEY, Authorization:'Bearer '+SB_KEY, 'Content-Type':'application/json', Prefer:'return=representation'}, opts.headers||{})}));
+ const txt = await res.text(); let data=null; try{ data = txt?JSON.parse(txt):null; }catch(e){}
+ if(!res.ok) throw new Error((data&&data.message)||('Ошибка '+res.status));
+ return data;
+}
+const patchOrder = (id, body) => api(`majlis_orders?id=eq.${id}`, {method:'PATCH', body:JSON.stringify(body)});
+const addHist = (order_id, text, extra={}) => api('majlis_history', {method:'POST', body:JSON.stringify(Object.assign({order_id, text, who: st.role==='manager'?'Анна':MY_NAME}, extra))});
+let DB = {orders:[], hist:[], reqs:[]}, sig='', online=true;
+async function load(){
+ const [o,h,r] = await Promise.all([
+  api('majlis_orders?select=*&order=updated_at.desc&limit=500'),
+  api('majlis_history?select=*&order=at.desc&limit=1500'),
+  api('majlis_requests?select=*&resolved=eq.false&order=at.desc')]);
+ DB = {orders:o||[], hist:h||[], reqs:r||[]}; online=true;
+ const s = JSON.stringify([o.map(x=>x.updated_at+x.id), h.length, r.length, (r[0]||{}).id]); const changed = s!==sig; sig=s; return changed;
+}
+async function sync(after){ try{ const ch=await load(); if(after) after(ch); }catch(e){ online=false; toast('Нет связи с базой. Повторим через пару секунд'); } }
+async function act(fn, okMsg){ try{ await fn(); haptic('ok'); if(okMsg) toast(okMsg); await load(); refresh(); }catch(e){ haptic('warn'); toast('Не получилось: '+e.message); } }
+
+/* ================= МОДЕЛИ ================= */
+const histOf = (id) => DB.hist.filter(h=>h.order_id===id);
+const reqsOf = (id) => DB.reqs.filter(q=>q.order_id===id);
+const total = (r) => (r.items||[]).reduce((s,i)=>s+(+i.p||0)*(+i.q||1),0) + (+r.ship||0);
+const short = (n) => /dualsense|геймпад/i.test(n)?'геймпад':/чехол/i.test(n)?'чехол':n;
+const title = (r) => { const it=r.items||[]; if(!it.length) return 'Заказ'; if(it.length===1) return it[0].n; if(it.length===2) return `${it[0].n} и ${short(it[1].n)}`; return `${it[0].n} и ещё ${it.length-1} ${plural(it.length-1,'товар','товара','товаров')}`; };
+const comes = (r) => (r.items||[]).length>1?'приедут':'приедет';
+const waits = (r) => (r.items||[]).length>1?'ждут вас':'ждёт вас';
+const isDone = (r) => r.stage===7;
+const isDelay = (r) => !!r.eta_prev && !isDone(r) && !r.cancelled;
+const lastEv = (r) => { const h=histOf(r.id).find(x=>x.stage!==null||x.notified); return h ? [h.text.replace(/^этап → «(.+)»$/,'$1'), ago(h.at)] : ['Заказ создан', ago(r.created_at)]; };
+const stageDate = (r,i) => { const h=histOf(r.id).find(x=>x.stage===i); return h?dd(D(h.at)):null; };
+const myOrders = () => DB.orders.filter(r=>+r.tg_user_id===+MY_ID && r.pay_status!=='draft');
+function heroOf(list){
+ const act=list.filter(r=>!r.archived);
+ return act.find(r=>r.pay_status==='unpaid'||r.pay_status==='checking') || act.find(r=>r.stage===6&&!r.cancelled) || act.find(r=>isDelay(r)) || act.filter(r=>!isDone(r)&&!r.cancelled).sort((a,b)=>(a.eta_to||'9')<(b.eta_to||'9')?-1:1)[0] || act.find(r=>r.cancelled) || act[0] || null;
+}
+/* флаги менеджера */
+function flagsOf(r){
+ const f=[]; if(r.cancelled||r.archived||r.pay_status==='draft') return f;
+ if(r.pay_status==='paid' && !isDone(r) && r.eta_to && D(r.eta_to)<today0()) f.push('over');
+ if(r.pay_status==='unpaid' && (Date.now()-D(r.created_at))>864e5) f.push('unpaid');
+ if(r.stage>=6 && !isDone(r) && !r.track) f.push('notrack');
+ if(reqsOf(r.id).length) f.push('question');
+ return f;
+}
+const FLAGS = {
+ over:{t:'Срок прошёл',c:'var(--alert)',why:(r)=>`срок ${etaShort(r)}, ${STAGES[r.stage]?STAGES[r.stage].t.toLowerCase():'до выкупа'}`,act:'Перенести'},
+ unpaid:{t:'Ждут оплаты больше суток',c:'var(--warn)',why:(r)=>`ссылка отправлена ${ago(r.created_at)}`,act:'Напомнить'},
+ notrack:{t:'Нужен трек СДЭК',c:'var(--warn)',why:()=>'этап «Передан в СДЭК» без трек-номера',act:'Добавить'},
+ question:{t:'Вопросы клиентов',c:'var(--blue-soft)',why:(r)=>{ const q=reqsOf(r.id)[0]; return `«${(q.topic||'')}${q.body?': '+q.body:''}»`.slice(0,70); },act:'Ответить'}
+};
+
+/* ================= СОСТОЯНИЕ ================= */
+const st = {role: ls.get('mj-role')||'buyer', bg: ls.get('mj-bg')||'light', tab:null, stack:[], notify:true, acc:{}, topic:null, ctx:null, mf:'all', msel:null, vis:{0:1,1:1,2:1,3:1,4:1,5:1,6:1,7:1}, norm:{}, newo:null, hapticOn: ls.get('mj-haptic')!=='0'};
+st.tab = st.role==='manager'?'mtoday':'home';
+const pushed = () => st.stack.length>1;
+
+/* ================= ПОКУПАТЕЛЬ ================= */
+const segs = (cur,id,right) => `<button class="prog" type="button" data-rail="${id}" aria-label="Все этапы заказа"><div class="seg" aria-hidden="true">`+STAGES.map((_,i)=>`<i class="${i<cur?'f':i===cur?'c':''}" style="--k:${i}"></i>`).join('')+`</div><div class="segl"><span>США</span><span class="go">${right||'Все этапы'}${I('chev')}</span></div></button>`;
+const kick = (r,verb) => (r.items||[]).length>1 ? `<button class="kickb" type="button" data-items="${r.id}">${esc(title(r))} ${verb}${I('chev')}</button>` : `<div class="kick">${esc(title(r))} ${verb}</div>`;
+const note = (tone,strong,rest) => `<div class="st"><span class="pill ${tone==='mute'?'':tone}">${strong}</span>${rest?`<span>${rest}</span>`:''}</div>`;
+const header = () => `<div class="hd"><div class="ava">${esc(MY_NAME[0])}</div><button class="nm" data-tab="profile" type="button">${esc(MY_NAME)}${I('chev')}</button><button class="r" data-tab="chat" type="button" aria-label="Менеджер Анна"><span class="ava m on">А</span></button></div>`;
+const trackRow = (t) => `<div class="trkrow"><span class="trkno">${esc(t)}</span><button class="icb" type="button" data-copy="${esc(t.replace(/ /g,''))}" aria-label="Скопировать трек">${I('copy')}</button></div>`;
+function rowFor(r){ let rr, sub;
+ if(r.cancelled){ rr='<div class="r mute">отменён</div>'; sub='<i class="sd mute"></i>'+(r.pay_status==='refund'?'Возврат оформлен':'Отменён'); }
+ else if(isDone(r)){ rr=`<div class="r mute">${stageDate(r,7)||''}</div>`; sub='<i class="sd ok"></i>Получен'; }
+ else if(r.pay_status!=='paid'){ rr=`<div class="r">${money(total(r))}<small style="color:var(--warn)">${r.pay_status==='checking'?'Проверяем':'Оплатить'}</small></div>`; sub='<i class="sd warn"></i>Ждёт оплаты'; }
+ else if(r.stage<0){ rr=`<div class="r">${etaShort(r)}</div>`; sub='<i class="sd ok"></i>Оплачен · выкупаем в США'; }
+ else if(r.stage===6){ rr=`<div class="r">${etaShort(r)}<small style="color:#7BE5AC">Забрать</small></div>`; sub='<i class="sd ok"></i>Можно забирать'; }
+ else { rr=`<div class="r">${etaShort(r)}</div>`; sub=`<i class="sd ${isDelay(r)?'alert':'ok'}"></i>${isDelay(r)?'Срок перенесён':where(r)}`; }
+ return `<button class="row" type="button" data-open="${r.id}"><span class="th">${I(iconFor(r.items||[]))}${(r.items||[]).length>1?`<em>${r.items.length}</em>`:''}</span><span class="tx"><b>${esc(title(r))}</b><span>${sub}</span></span>${rr}</button>`; }
+
+function homeHTML(){
+ const mine=myOrders(), r=heroOf(mine);
+ if(!r) return header()+`<div class="date long" style="margin-top:46px">Здесь будет<br>ваш заказ</div><div class="psub">Менеджер пришлёт ссылку на заказ. Откройте её — заказ появится здесь. Или введите код из ссылки в профиле.</div>
+  <button class="pbtn" type="button" data-tab="chat">${I('chat')}Написать менеджеру</button><button class="btg surf" type="button" data-sheet="bind">Привязать заказ по коду</button>`;
+ let h=header(); const p=r.pay_status, ep=etaParts(r);
+ if(r.cancelled){
+  h+=`<div class="kick">${esc(title(r))} · ${r.no}</div><div class="date long">Заказ<br>отменён</div>${note('mute',p==='refund'?'Возврат оформлен':'Отменён','')}
+  <button class="card first surf" type="button" data-open="${r.id}"><div class="pl"><span>Возврат</span><span>${ago(r.updated_at)}</span></div><div class="pv">${money(total(r))} вернутся на карту</div><div class="sm">Обычно 3–5 рабочих дней, срок зависит от банка.</div></button>`;
+ } else if(p==='unpaid'){
+  h+=`${kick(r,'· к оплате')}<div class="date amt"><span data-count="${total(r)}">${money(total(r)).replace(' ₽','')}</span> <small>₽</small></div>${note('warn','Ждёт оплаты',r.no)}
+  <button class="pbtn" type="button" data-sheet="pay" data-ctx="${r.id}">Перейти к оплате</button>
+  <button class="card surf" type="button" data-open="${r.id}"><div class="pl"><span>Ожидаемый срок</span><b>${etaText(r)}</b></div><div class="sm">Считаем после оплаты. Если изменится — напишем. Состав и сумма — в заказе.</div></button>`;
+ } else if(p==='checking'){
+  h+=`<div class="kick">Заказ ${r.no}</div><div class="date long">Проверяем<br>оплату</div>${note('info','Проверяем','обычно до 2 минут')}<div class="psub">Заказ сохранён, ничего не нужно делать заново.</div><div class="spin" role="status" aria-label="Проверяем"></div>`;
+ } else if(r.stage<0){
+  h+=`${kick(r,comes(r))}<div class="date">${ep[0]} <small>${ep[1]}</small></div><div class="exp">ожидаемый срок</div>${note('ok','Оплачено','дальше выкуп в США')}${segs(-1,r.id)}
+  <button class="card first surf" type="button" data-open="${r.id}"><div class="pl"><span>Последнее событие</span><span>${lastEv(r)[1]}</span></div><div class="pv">${esc(lastEv(r)[0])}</div><div class="sep"></div><div class="nx"><div><div class="pl">Дальше</div><div class="pv">Выкуп в США</div></div><span class="dv">${STAGES[0].plan}</span></div></button>`;
+ } else if(r.stage===6){
+  h+=`${kick(r,waits(r))}<div class="date long">Можно<br>забирать</div>${note('ok','Можно забирать','до '+etaText(r))}${segs(6,r.id)}
+  <div class="card first surf"><div class="pl"><span>Трек СДЭК</span><span>${esc((r.delivery||{}).name||'СДЭК')}</span></div>${r.track?trackRow(r.track):'<div class="pv" style="color:var(--w50)">появится в течение дня</div>'}${r.track?`<button class="more" type="button" data-track>Отследить на сайте СДЭК${I('ext')}</button>`:''}</div>`;
+ } else if(isDone(r)){
+  h+=`<div class="kick">${esc(title(r))}</div><div class="date long">Получен</div>${note('ok','Получен',stageDate(r,7)||'')}`;
+ } else {
+  const d=isDelay(r), le=lastEv(r);
+  h+=`${kick(r,comes(r))}<div class="date">${ep[0]} <small>${ep[1]}</small></div><div class="exp">ожидаемый срок${d?' · было '+esc(r.eta_prev)+(r.delay_reason?', '+esc(r.delay_reason.toLowerCase()):''):''}</div>
+  ${d?note('alert','Задержка',where(r)):note('ok','В срок',where(r))}${segs(r.stage,r.id)}`;
+  h+= `<button class="card first surf" type="button" data-open="${r.id}"><div class="pl"><span>Последнее событие</span><span>${le[1]}</span></div><div class="pv">${esc(le[0])}</div><div class="sep"></div><div class="nx"><div><div class="pl">Дальше</div><div class="pv">${STAGES[r.stage+1].t}</div></div><span class="dv">${STAGES[r.stage+1].plan}</span></div></button>`;
+ }
+ const others=mine.filter(x=>x!==r&&!x.archived);
+ const act=others.filter(x=>!isDone(x)&&!x.cancelled), fin=others.filter(x=>isDone(x)||x.cancelled);
+ if(act.length) h+=`<div class="sec"><span>Активные</span><span>${act.length}</span></div><div class="list surf">${act.map(rowFor).join('')}</div>`;
+ if(fin.length) h+=`<div class="sec"><span>Завершённые</span><span>${fin.length}</span></div><div class="list surf">${fin.map(rowFor).join('')}</div>`;
+ return h;
+}
+function orderHTML(id){
+ const r=DB.orders.find(x=>x.id===id); if(!r) return `<button class="back" type="button" data-back>${I('back')}Назад</button><div class="psub" style="margin-top:40px">Заказ не найден или удалён.</div>`;
+ const p=r.pay_status, d=isDelay(r), A=(n)=>!!st.acc[id+':'+n], ep=etaParts(r), dv=r.delivery||{};
+ let h=`<button class="back" type="button" data-back>${I('back')}Назад</button>
+ <div class="hd" style="margin-top:18px"><button class="num glass" type="button" data-copy="${r.no}" aria-label="Скопировать номер заказа">${r.no}${I('copy')}</button><span style="font-size:12.5px;color:var(--w50)">от ${dd(D(r.created_at))}</span></div>
+ <div class="kick" style="margin-top:22px">${esc(title(r))}</div>`;
+ if(r.cancelled) h+=`<div class="date long">Отменён</div>${note('mute',p==='refund'?'Возврат оформлен':'Отменён',p==='refund'?money(total(r))+' вернутся на карту':'')}`;
+ else if(isDone(r)) h+=`<div class="date long">Получен</div>${note('ok','Получен',stageDate(r,7)||'')}`;
+ else if(p!=='paid') h+=`<div class="date amt">${money(total(r)).replace(' ₽','')} <small>₽</small></div>${note(p==='checking'?'info':'warn',p==='checking'?'Проверяем оплату':'Ждёт оплаты','ожидаемо '+etaText(r)+' после оплаты')}`;
+ else if(r.stage===6) h+=`<div class="date long">Можно<br>забирать</div>${note('ok','Можно забирать','до '+etaText(r))}`;
+ else h+=`<div class="date">${ep[0]} <small>${ep[1]}</small></div><div class="exp">ожидаемый срок${d?' · было '+esc(r.eta_prev)+(r.delay_reason?', '+esc(r.delay_reason.toLowerCase()):''):''}</div>${d?note('alert','Задержка',r.stage>=0?where(r):''):note('ok','В срок',r.stage>=0?where(r):'выкупаем в США')}`;
+ if(!r.cancelled && !isDone(r) && p==='paid'){
+  const nowT = r.stage<0?'Оплата подтверждена':STAGES[r.stage].t, le=lastEv(r);
+  const nxt = r.stage<0?[STAGES[0].t,STAGES[0].plan]:r.stage===6?['Получение','до '+etaText(r)]:[STAGES[r.stage+1].t,STAGES[r.stage+1].plan];
+  h+=`<div class="card first surf"><div class="pl"><span>Сейчас${r.stage>=0?` · ${r.stage+1} из ${N}`:''}</span><span>${le[1]}</span></div><div class="pv">${nowT}</div><div class="sep"></div><div class="nx"><div><div class="pl">Дальше</div><div class="pv">${nxt[0]}</div></div><span class="dv">${nxt[1]}</span></div>
+  ${r.track&&r.stage===6?`<div class="sep"></div><div class="pl"><span>Трек СДЭК</span><span>${esc(dv.name||'')}</span></div>${trackRow(r.track)}`:''}
+  <button class="more" type="button" data-acc="${id}:rail" aria-expanded="${A('rail')}">${A('rail')?'Скрыть этапы':'Все этапы и документы'}${I('chev')}</button></div>`;
+  if(A('rail')) h+=railHTML(r);
+ }
+ if(r.comment_client) h+=`<div class="card surf"><div class="mrow"><span class="ava m" style="width:32px;height:32px;font-size:13px">А</span><div class="tx"><span>Анна, комментарий к заказу</span><b style="font-weight:400;font-size:14.5px;margin-top:2px">${esc(r.comment_client)}</b></div></div></div>`;
+ const payTxt = p==='paid'?'Оплачено полностью':p==='refund'?'Возврат оформлен':p==='checking'?'Проверяем оплату':'Ждёт оплаты';
+ const items=r.items||[];
+ h+=`<div class="list surf" style="margin-top:8px">
+ <button class="row" type="button" data-acc="${id}:items" aria-expanded="${A('items')}"><span class="th">${I(iconFor(items))}${items.length>1?`<em>${items.length}</em>`:''}</span><span class="tx"><b>Состав</b><span>${esc(items.map(i=>short(i.n)).join(', '))}</span></span><span class="r">${money(total(r))}</span>${I('chev')}</button>
+ ${A('items')?`<div class="accb">${items.map(i=>`<div class="dl"><span>${esc(i.n)}<small>${esc(i.s||'')} · ${i.q} шт.</small></span><b>${money(i.p*i.q)}</b></div>`).join('')}<div class="dl"><span>Доставка до СДЭК</span><b>${money(r.ship)}</b></div></div>`:''}
+ <button class="row" type="button" data-acc="${id}:pay" aria-expanded="${A('pay')}"><span class="th">${I('shield')}</span><span class="tx"><b>Оплата</b><span>${payTxt}</span></span>${I('chev')}</button>
+ ${A('pay')?`<div class="accb"><div class="dl"><span>Итого</span><b>${money(total(r))}</b></div>${p==='paid'?`<div class="dl"><span>Оплачено ${r.paid_at?dd(D(r.paid_at)):''}</span><b>${money(total(r))}</b></div><div class="dl"><span>Чек</span><span>в чате бота</span></div>`:`<div class="dl"><span>К оплате</span><b>${money(total(r))}</b></div>`}</div>`:''}
+ <button class="row" type="button" data-acc="${id}:deliv" aria-expanded="${A('deliv')}"><span class="th">${I('truck')}</span><span class="tx"><b>Доставка</b><span>${esc(dv.name||'не указана')} · ${esc(r.client_name||'')}</span></span>${I('chev')}</button>
+ ${A('deliv')?`<div class="accb"><div class="dl"><span>${esc(dv.type||'Доставка')}<small>${esc(dv.addr||'')}</small></span><span>${dv.code?'код '+esc(dv.code):''}</span></div><div class="dl"><span>Получатель<small>${esc(r.client_name||'')}, ${esc(r.client_phone||'')}</small></span></div>${r.track?`<div class="dl"><span>Трек СДЭК</span></div>${trackRow(r.track)}`:''}<div class="dl"><span style="color:var(--w30)">Изменить можно через менеджера</span></div></div>`:''}
+ </div>
+ <button class="btg surf" type="button" data-tab="chat" data-ctx="${id}">${I('chat')}Связаться с менеджером</button>
+ <button class="lnk" type="button" data-sheet="report" data-ctx="${id}">Нашли ошибку в данных? Сообщить менеджеру</button>`;
+ return h;
+}
+function railHTML(r){
+ let h=`<div class="rail surf">`;
+ STAGES.forEach((s,i)=>{ const cls=isDone(r)||i<r.stage?'done':i===r.stage?'cur':'fut';
+  let sub=''; if(i===r.stage&&!isDone(r)) sub = 'сейчас здесь · '+lastEv(r)[1];
+  if(i===r.stage+1&&!isDone(r)) sub='план: '+s.plan;
+  const dt = stageDate(r,i) || (i===N-1?'≈ '+(r.eta_to?dd(D(r.eta_to)):'—'):'—');
+  h+=`<div class="stg ${cls}"><span class="dot"></span><div><div class="tt">${s.t}</div>${sub?`<div class="sub">${sub}</div>`:''}</div><div class="dt">${dt}</div></div>`; });
+ return h+`</div><div class="tag">Этапы — предложение, список согласуем</div>`;
+}
+function chatHTML(){
+ const mine=myOrders(); const r = (st.ctx && DB.orders.find(x=>x.id===st.ctx)) || heroOf(mine);
+ return `<div class="mhero"><span class="ava m on">А</span><h2>Анна</h2><p>Ваш менеджер · в сети<br>Отвечает в среднем за 10 минут, с 10 до 22</p></div>
+ ${r?`<button class="card first surf" type="button" data-sheet="pickorder"><div class="mrow"><span class="th">${I(iconFor(r.items||[]))}</span><div class="tx"><span>Вопрос по заказу</span><b style="margin-top:2px">${esc(title(r))}</b></div><span style="font-size:12.5px;color:var(--blue-soft)">${r.no}</span></div></button>`:''}
+ <div class="sec" style="margin-bottom:0"><span>Быстрый вопрос</span><span></span></div>
+ <div class="chips" role="group" aria-label="Быстрый вопрос">${QUICK.map(q=>`<button class="chip" type="button" data-topic="${q}" aria-pressed="${st.topic===q}">${q}</button>`).join('')}</div>
+ <button class="pbtn" type="button" data-chat="${r?r.id:''}">${I('chat')}${st.topic?'Спросить: '+st.topic.replace('?',''):'Написать Анне'}</button>
+ <div class="psub" style="text-align:center;margin:12px auto 0;font-size:13px;color:var(--w50)">Вопрос уйдёт менеджеру вместе с номером заказа. На стенде — в пульт, в боевой версии — в чат Telegram.</div>
+ ${r?`<button class="lnk" type="button" data-sheet="report" data-ctx="${r.id}">Нашли ошибку в данных? Сообщить</button>`:''}`;
+}
+function catalogHTML(){
+ const cats=[['console','Игровые консоли','PS5, Xbox, Switch','от 52 000 ₽'],['iphone','Apple','iPhone, AirPods, Mac','от 17 500 ₽'],['dyson','Dyson','пылесосы, фены','от 38 000 ₽'],['gopro','Экшн-камеры','GoPro, DJI, Insta360','от 32 000 ₽'],['macbook','Ноутбуки','подберём под задачу','от 89 000 ₽']];
+ return `<div class="ptitle">Каталог</div><div class="psub">Техника из США под заказ. В цене выкуп, доставка до СДЭК и пошлина.</div>
+ <div class="cats">${cats.map(c=>`<button class="cat surf" type="button" data-site><span class="im"><img src="cat-${c[0]}.webp" alt="" loading="lazy" decoding="async" width="440" height="440"></span><span class="ct"><b>${c[1]}</b><span>${c[2]}</span><span class="pr">${c[3]}</span></span></button>`).join('')}
+ <button class="cat surf" type="button" data-tab="chat" style="justify-content:center;padding:16px"><span class="th" style="margin:0 0 12px">${I('chat')}</span><b>Не нашли?</b><span>опишите задачу — Анна подберёт</span></button></div>
+ <div class="tag">Витрина на сайте · в v1 каталог внутри аппа не входит</div>`;
+}
+function calHTML(){
+ const mine=myOrders().filter(r=>!r.archived&&!r.cancelled); const now=new Date(); const Y=now.getFullYear(), M=now.getMonth();
+ const first=new Date(Y,M,1), off=(first.getDay()+6)%7, days=new Date(Y,M+1,0).getDate();
+ const inM=(d)=>d&&d.getFullYear()===Y&&d.getMonth()===M;
+ const ranges=[], picks=[], gots=[];
+ mine.forEach(r=>{ const a=D(r.eta_from), b=D(r.eta_to); if(r.stage===6&&inM(b)) picks.push(b.getDate()); else if(isDone(r)){ const h=histOf(r.id).find(x=>x.stage===7); if(h&&inM(D(h.at))) gots.push(D(h.at).getDate()); } else if(r.pay_status==='paid'&&inM(b)) ranges.push([inM(a)?a.getDate():1,b.getDate()]); });
+ let g=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(w=>`<div class="wd">${w}</div>`).join('');
+ const prevDays=new Date(Y,M,0).getDate(); for(let i=off;i>0;i--) g+=`<div class="d mu">${prevDays-i+1}</div>`;
+ for(let d=1; d<=days; d++){ let c='d'; const rg=ranges.find(x=>d>=x[0]&&d<=x[1]); if(rg) c+=' rng'+(d===rg[0]?' rs':'')+(d===rg[1]?' re':''); if(d===now.getDate()) c+=' today'; if(picks.includes(d)) c+=' pick'; if(gots.includes(d)) c+=' got'; g+=`<div class="${c}"><span>${d}</span></div>`; }
+ return `<div class="cal"><div class="ch"><b>${['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][M]} ${Y}</b><span>доставки</span></div><div class="cg">${g}</div>
+ <div class="leg">${ranges.length?'<span><i style="background:rgba(30,59,255,.6)"></i>ожидаем</span>':''}${picks.length?'<span><i style="background:#fff"></i>забрать до</span>':''}${gots.length?'<span><i style="background:var(--ok);border-radius:50%"></i>получено</span>':''}<span><i style="box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)"></i>сегодня</span></div></div>`;
+}
+function profileHTML(){
+ const mine=myOrders();
+ return `<div class="ptitle">Профиль</div>
+ <div class="who"><span class="ava">${esc(MY_NAME[0])}</span><div><b>${esc(MY_NAME)}</b><span>${mine.length} ${plural(mine.length,'заказ','заказа','заказов')} · ID ${MY_ID}</span></div></div>
+ <div class="sec"><span>Календарь доставок</span><span></span></div>
+ <div class="list surf" style="padding:0">${calHTML()}</div>
+ <button class="btg surf" type="button" data-sheet="calendar">${I('cal')}Добавить даты в календарь телефона</button>
+ <div class="sec"><span>Заказы</span><span></span></div>
+ <div class="list surf"><button class="row" type="button" data-sheet="bind"><span class="th">${I('link')}</span><span class="tx"><b>Привязать заказ по коду</b><span>код из ссылки менеджера</span></span>${I('chev')}</button></div>
+ <div class="sec"><span>Уведомления</span><span></span></div>
+ <div class="list surf"><button class="row" type="button" data-toggle="notify"><span class="tx"><b>Статусы в чат бота</b><span>оплата, этапы, срок, трек, отмена</span></span><span class="tog" role="switch" aria-checked="${st.notify}"></span></button><button class="row" type="button" data-toggle="haptic"><span class="tx"><b>Вибрация</b><span>отклик на нажатия</span></span><span class="tog" role="switch" aria-checked="${st.hapticOn!==false}"></span></button></div>
+ <div class="sec"><span>Тестовый стенд</span><span></span></div>
+ <div class="list surf"><button class="row" type="button" data-role="manager"><span class="th">${I('bolt')}</span><span class="tx"><b>Режим менеджера</b><span>пульт заказов (только для теста)</span></span>${I('chev')}</button><button class="row" type="button" data-sheet="how"><span class="tx"><b>Как мы работаем</b><span>сроки, оплата, отмена</span></span>${I('chev')}</button></div>`;
+}
+
+/* ================= МЕНЕДЖЕР ================= */
+const work = () => DB.orders.filter(r=>!r.archived);
+const payPillM = (p) => p==='paid'?'<span class="pill ok">Оплачено</span>':p==='unpaid'?'<span class="pill warn">Ждёт оплаты</span>':p==='checking'?'<span class="pill info">Проверяем</span>':p==='draft'?'<span class="pill">Черновик</span>':'<span class="pill">Возврат</span>';
+const stageTxt = (r) => r.cancelled?'Отменён':isDone(r)?'Получен':r.stage<0?(r.pay_status==='draft'?'не отправлен':'до выкупа'):`${STAGES[r.stage].t} · ${r.stage+1}/${N}`;
+const mSearch = (ph) => `<div class="srch"><label class="in glass">${I('search')}<input type="search" id="msrch" placeholder="${ph}" autocomplete="off"></label><button class="icb w" type="button" data-mnew aria-label="Новый заказ">${I('plus')}</button></div>`;
+function todayHTML(){
+ const w=work(), flagged=[]; w.forEach(r=>flagsOf(r).forEach(f=>flagged.push([f,r])));
+ const groups={}; flagged.forEach(([f,r])=>(groups[f]=groups[f]||[]).push(r));
+ const inWork=w.filter(r=>r.pay_status==='paid'&&!isDone(r)&&!r.cancelled).length;
+ const paidToday=w.filter(r=>r.paid_at&&D(r.paid_at)>=today0()).length;
+ const stCount=(s)=>w.filter(r=>!r.cancelled&&(s<0?(r.pay_status==='unpaid'||r.pay_status==='checking'):(r.pay_status==='paid'&&r.stage===s))).length;
+ const pipe=[['Ждут оплаты',-1],...STAGES.slice(0,7).map((s,i)=>[s.t,i])].map(([t,s])=>[t,s,stCount(s)]);
+ const mx=Math.max(1,...pipe.map(p=>p[2]));
+ return `<div class="mtop"><span class="ava m">А</span><div class="ttl">${new Date().toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'})}<b>Анна · менеджер</b></div><button class="r icb" type="button" data-sync aria-label="Обновить">${I('chev')}</button></div>
+ ${mSearch('Номер, ФИО, телефон, трек')}
+ <div class="kpis"><div class="kpi surf"><b>${inWork}</b><span>в работе</span></div><div class="kpi surf"><b>${paidToday}</b><span>оплачено сегодня</span></div><div class="kpi surf"><b>${flagged.length}</b><span><i class="sd ${flagged.length?'alert':'ok'}"></i>${flagged.length?'требуют действия':'всё в порядке'}</span></div></div>
+ <div class="sec"><span>Требует действия</span><span>${flagged.length?'по важности':''}</span></div>
+ ${flagged.length?Object.keys(FLAGS).filter(f=>groups[f]).map(f=>`<div class="grp surf"><div class="gh"><i style="background:${FLAGS[f].c}"></i>${FLAGS[f].t}<em style="color:${FLAGS[f].c}">${groups[f].length}</em></div>${groups[f].map(r=>`<div class="prow"><button class="tx" type="button" data-mopen="${r.id}" style="text-align:left"><b>${r.no} · ${esc(r.client_name||'')}</b><span>${esc(FLAGS[f].why(r))}</span></button><button class="act" type="button" data-fix="${f}:${r.id}">${FLAGS[f].act}</button></div>`).join('')}</div>`).join('')
+  :`<div class="card surf" style="text-align:center;padding:26px 16px"><div class="pv">Всё под контролем</div><div class="sm">Новых проблем нет.</div></div>`}
+ <div class="sec"><span>Все заказы по этапам</span><span>${w.filter(r=>!r.cancelled&&r.pay_status!=='draft'&&!isDone(r)).length} в работе</span></div>
+ <div class="list surf pipe">${pipe.map(([t,s,n])=>`<button class="pr" type="button" data-pipe="${s}"><span class="pt">${t}</span><b>${n}</b><span class="pb"><i style="width:${Math.round(n/mx*100)}%"></i></span></button>`).join('')}</div>
+ <div class="sec"><span>Последние изменения</span><button type="button" data-mtab="morders" class="seclink">ВСЕ</button></div>
+ <div class="list surf">${w.slice(0,4).map(ordRow).join('')}</div>`;
+}
+function ordRow(r){
+ const over=flagsOf(r).includes('over');
+ if(st.msel){ const on=st.msel.has(r.id); return `<button class="ord sel${on?' on':''}" type="button" data-msel="${r.id}"><span class="ck">${on?I('check'):''}</span><div class="l1"><b>${esc(r.client_name||'')}</b><span>${r.no}</span></div><div class="l2"><span>${esc((r.items||[]).map(i=>i.n).join(', '))}</span><span class="dv">${money(total(r))}</span></div><div class="l3">${payPillM(r.pay_status)}<span class="pill">${stageTxt(r)}</span></div></button>`; }
+ return `<button class="ord ${over?'over':''}" type="button" data-mopen="${r.id}"><div class="l1"><b>${esc(r.client_name||'')}</b><span>${r.no}</span></div><div class="l2"><span>${esc((r.items||[]).map(i=>i.n).join(', '))}</span><span class="dv">${money(total(r))}</span></div><div class="l3">${payPillM(r.pay_status)}<span class="pill">${stageTxt(r)}</span>${r.eta_to?`<span class="pill${over?' alert':''}">${over?'просрочен · ':''}${etaShort(r)}</span>`:''}<span class="upd">изм. ${ago(r.updated_at)}</span></div></button>`;
+}
+const MFILT = [['all','Все'],['unpaid','Ждут оплаты'],['transit','В пути'],['over','Просрочены'],['draft','Черновики']];
+function mFilter(f){ const w=work(); return w.filter(r=> f==='all'?(r.pay_status!=='draft') : f==='unpaid'?(r.pay_status==='unpaid'||r.pay_status==='checking') : f==='transit'?(r.pay_status==='paid'&&!isDone(r)&&!r.cancelled) : f==='over'?flagsOf(r).includes('over') : f==='draft'?r.pay_status==='draft' : f.startsWith('st:')?(r.pay_status==='paid'&&!r.cancelled&&r.stage===+f.slice(3)) : true); }
+function mordersHTML(){
+ const f=st.mf, list=mFilter(f), stg=f.startsWith('st:')?+f.slice(3):null, sel=st.msel, n=sel?sel.size:0;
+ return `<div class="ptitle" style="margin-top:28px">Заказы</div>${mSearch('Поиск по номеру, ФИО, телефону, треку')}
+ <div class="chips" style="margin-top:12px">${stg!==null?`<button class="chip" type="button" aria-pressed="true" data-mf="all">${STAGES[stg].t} ✕</button>`:''}${MFILT.map(([k,t])=>`<button class="chip" type="button" data-mf="${k}" aria-pressed="${f===k}">${t}<b>${mFilter(k).length}</b></button>`).join('')}</div>
+ <div class="sec"><span>${list.length} ${plural(list.length,'заказ','заказа','заказов')}</span><span style="display:flex;gap:14px"><button type="button" class="seclink" data-mselect>${sel?'ГОТОВО':'ВЫБРАТЬ'}</button></span></div>
+ ${sel?`<div class="bulk glass"><span>${n?`Выбрано ${n}`:'Отметьте заказы'}</span><button type="button" class="act" data-sheet="mbulk" ${n?'':'disabled'}>Следующий этап</button></div>`:''}
+ <div class="list surf">${list.length?list.map(ordRow).join(''):'<div class="sm" style="padding:18px 0;text-align:center">Здесь пусто</div>'}</div>`;
+}
+function morderHTML(id){
+ const r=DB.orders.find(x=>x.id===id); if(!r) return `<button class="back" type="button" data-back>${I('back')}Назад</button><div class="psub" style="margin-top:40px">Заказ не найден.</div>`;
+ const A=(n)=>!!st.acc[id+':'+n], dv=r.delivery||{}, items=r.items||[], over=flagsOf(r).includes('over');
+ const hist=histOf(id), reqs=reqsOf(id);
+ return `<button class="back" type="button" data-back>${I('back')}Назад</button>
+ <div class="hd" style="margin-top:18px"><button class="num glass" type="button" data-copy="${r.no}">${r.no}${I('copy')}</button><span style="font-size:12.5px;color:var(--w50)">изм. ${ago(r.updated_at)}</span><button class="r icb" type="button" data-sheet="mmore" data-ctx="${id}" aria-label="Ещё действия">${I('dots')}</button></div>
+ <div class="kick" style="margin-top:20px">${esc(r.client_name||'Без имени')} · ${esc(items.map(i=>i.n).join(', '))}</div>
+ <div class="date amt" style="font-size:44px">${money(total(r)).replace(' ₽','')} <small>₽</small></div>
+ <div class="st">${payPillM(r.pay_status)}<span class="pill">${stageTxt(r)}</span></div>
+ ${reqs.length?`<div class="grp surf" style="margin-top:16px"><div class="gh"><i style="background:var(--blue-soft)"></i>Вопрос клиента<em style="color:var(--blue-soft)">${reqs.length}</em></div>${reqs.map(q=>`<div class="prow"><div class="tx"><b>${esc(q.topic||'Вопрос')}</b><span style="white-space:normal">${esc(q.body||'')} · ${ago(q.at)}</span></div><button class="act" type="button" data-resolve="${q.id}">Решено</button></div>`).join('')}</div>`:''}
+ <div class="mstat"><button class="card surf" type="button" data-sheet="meta" data-ctx="${id}"><div class="pl"><span>Срок</span><span style="color:var(--blue-soft)">изменить</span></div><div class="pv"${over?' style="color:var(--alert)"':''}>${r.eta_to?etaShort(r):'—'}</div></button>
+ <button class="card surf" type="button" data-sheet="mtrack" data-ctx="${id}"><div class="pl"><span>Трек СДЭК</span><span style="color:var(--blue-soft)">${r.track?'изменить':'добавить'}</span></div><div class="pv"${!r.track&&r.stage>=6&&!isDone(r)?' style="color:var(--warn)"':''}>${r.track?esc(r.track):(r.stage>=6&&!isDone(r)?'нужен':'—')}</div></button></div>
+ <div class="list surf" style="margin-top:8px">
+ <button class="row" type="button" data-acc="${id}:cl" aria-expanded="${A('cl')}"><span class="th">${I('user')}</span><span class="tx"><b>${esc(r.client_name||'Клиент')}</b><span>${esc(r.client_phone||'')} · ${r.tg_user_id?'Telegram привязан':'не привязан'}</span></span>${I('chev')}</button>
+ ${A('cl')?`<div class="accb"><div class="dl"><span>${esc(dv.type||'Доставка')}<small>${esc(dv.name||'')} · ${esc(dv.addr||'')}${dv.code?' · код '+esc(dv.code):''}</small></span></div><div class="dl"><span>Ссылка для клиента<small>${BOT_APP}?startapp=${r.bind_code}</small></span><button class="icb" type="button" data-copy="${BOT_APP}?startapp=${r.bind_code}" aria-label="Скопировать ссылку">${I('copy')}</button></div><div class="dl"><span>Код привязки</span><b>${r.bind_code}</b></div></div>`:''}
+ <button class="row" type="button" data-acc="${id}:items" aria-expanded="${A('items')}"><span class="th">${I('list')}</span><span class="tx"><b>Товары · ${items.length}</b><span>${esc(items.map(i=>i.n).join(', '))}</span></span>${I('chev')}</button>
+ ${A('items')?`<div class="accb">${items.map(i=>`<div class="dl"><span>${esc(i.n)}<small>${esc(i.s||'')} · ${i.q} шт.</small></span><b>${money(i.p*i.q)}</b></div>`).join('')}<div class="dl"><span>Доставка</span><b>${money(r.ship)}</b></div><div class="dl"><span style="color:var(--w30)">${r.pay_status==='paid'?'После оплаты изменения сохраняются в истории':'До оплаты состав можно менять'}</span></div></div>`:''}
+ <button class="row" type="button" data-acc="${id}:pay" aria-expanded="${A('pay')}"><span class="th">${I('shield')}</span><span class="tx"><b>Оплата</b><span>${r.pay_status==='paid'?'Оплачено '+(r.paid_at?dd(D(r.paid_at)):''):r.pay_status==='draft'?'Ссылка не создана':r.pay_status==='checking'?'Банк подтверждает':'Ссылка отправлена, не оплачена'}</span></span>${I('chev')}</button>
+ ${A('pay')?`<div class="accb"><div class="dl"><span>Сумма</span><b>${money(total(r))}</b></div>${r.pay_status==='unpaid'||r.pay_status==='checking'?`<div class="dl"><button class="num glass" type="button" data-markpaid="${id}">Отметить оплату (тест)</button></div>`:''}</div>`:''}
+ <button class="row" type="button" data-sheet="mnote" data-ctx="${id}"><span class="th">${I('chat')}</span><span class="tx"><b>Комментарии</b><span>${r.comment_client?'клиенту: '+esc(r.comment_client):'клиенту и внутренняя заметка'}</span></span>${I('chev')}</button>
+ <button class="row" type="button" data-acc="${id}:hist" aria-expanded="${A('hist')}"><span class="th">${I('cal')}</span><span class="tx"><b>История · ${hist.length}</b><span>кто, когда и что изменил</span></span>${I('chev')}</button>
+ ${A('hist')?`<div class="accb"><div class="hist" style="padding:0">${hist.slice(0,30).map(h=>`<div class="hi"><span class="t">${dd(D(h.at))}</span><span><b>${esc(h.who)}</b> · <span>${esc(h.text)}${h.notified?' · клиент уведомлён':''}</span></span></div>`).join('')}</div></div>`:''}
+ </div>
+ ${r.note_internal?`<div class="tag">Заметка: ${esc(r.note_internal)}</div>`:''}`;
+}
+function mnewHTML(){
+ const o=st.newo;
+ return `<button class="back" type="button" data-back>${I('back')}Назад</button>
+ <div class="hd" style="margin-top:18px"><span style="font-size:12.5px;color:var(--w50)">Новый заказ</span><span class="r saved"><i></i>Черновик сохраняется</span></div>
+ <div class="ptitle" style="margin-top:18px;font-size:38px">Новый<br>заказ</div>
+ <div class="sec"><span>1 · Клиент</span><span></span></div>
+ <div class="card surf" style="margin-top:0"><label class="field" style="margin-top:0"><span>Телефон</span><input type="tel" data-nf="phone" value="${esc(o.phone)}" placeholder="+7 900 000-00-00"></label><label class="field"><span>ФИО получателя</span><input type="text" data-nf="name" value="${esc(o.name)}" placeholder="Иван Иванов"></label>${(()=>{ const f=DB.orders.find(x=>o.phone&&x.client_phone&&x.client_phone.replace(/\D/g,'').slice(-10)===o.phone.replace(/\D/g,'').slice(-10)); return f?`<div class="found">${I('check')}${esc(f.client_name)} · уже покупал${f.tg_user_id?' · Telegram привязан':''}</div>`:''; })()}</div>
+ <div class="sec"><span>2 · Товары</span><span>${o.items.length} поз.</span></div>
+ <div class="list surf">${o.items.map((x,i)=>`<div class="pos"><span><b>${esc(x.n)}</b><br><small>${esc(x.s||'')} · ${x.q} шт.</small></span><span class="q">${money(x.p*x.q)} <button type="button" data-delitem="${i}" style="color:var(--w30);margin-left:6px" aria-label="Удалить позицию">✕</button></span></div>`).join('')}<button class="row" type="button" data-sheet="additem" style="color:var(--blue-soft)"><span class="th" style="color:var(--blue-soft)">${I('plus')}</span><span class="tx"><b style="color:var(--blue-soft)">Добавить позицию</b><span>название, характеристики, кол-во, цена</span></span></button></div>
+ <div class="sec"><span>3 · Сумма и срок</span><span></span></div>
+ <div class="card surf" style="margin-top:0"><div class="dl" style="padding-top:0"><span>Товары</span><b>${money(o.items.reduce((s,x)=>s+x.p*x.q,0))}</b></div><label class="field"><span>Доставка до СДЭК, ₽</span><input type="number" inputmode="numeric" data-nf="ship" value="${o.ship}"></label><div class="dl"><span>Итого, рубли</span><b class="dv">${money(o.items.reduce((s,x)=>s+x.p*x.q,0)+(+o.ship||0))}</b></div>
+ <div class="mstat" style="margin:10px 0 0;grid-template-columns:1fr 1fr"><label class="field" style="margin:0"><span>Срок от</span><input type="date" data-nf="from" value="${o.from}"></label><label class="field" style="margin:0"><span>Срок до</span><input type="date" data-nf="to" value="${o.to}"></label></div></div>
+ <div class="sec"><span>4 · Доставка</span><span></span></div>
+ <div class="card surf" style="margin-top:0"><div class="seg2"><button type="button" data-ntype="ПВЗ" aria-pressed="${o.type==='ПВЗ'}">Пункт СДЭК</button><button type="button" data-ntype="Курьер" aria-pressed="${o.type==='Курьер'}">Курьер</button></div>
+ <label class="field"><span>${o.type==='Курьер'?'Адрес доставки':'Пункт выдачи'}</span><input type="text" data-nf="addr" value="${esc(o.addr)}" placeholder="${o.type==='Курьер'?'Город, улица, дом, квартира':'СДЭК Тверская · MSK2041'}"></label>
+ <label class="field"><span>Комментарий клиенту (необязательно)</span><input type="text" data-nf="comment" value="${esc(o.comment)}"></label></div>
+ <div class="tag">Для ссылки на оплату нужны: товары и сумма · для отправки: ФИО, телефон, доставка</div>`;
+}
+function mlinksHTML(){
+ const w=work().filter(r=>r.pay_status!=='draft').sort((a,b)=>a.updated_at<b.updated_at?1:-1);
+ const lbl=(r)=>r.pay_status==='paid'?['Оплачена','#7BE5AC']:r.pay_status==='checking'?['Банк подтверждает','var(--blue-soft)']:r.pay_status==='refund'?['Возврат','var(--w50)']:['Отправлена, не оплачена','var(--warn)'];
+ return `<div class="ptitle" style="margin-top:28px">Ссылки</div><div class="psub">Ссылки на оплату и их статус. На стенде оплата тестовая.</div>
+ <div class="sec"><span>Все ссылки</span><span>${w.length}</span></div>
+ <div class="list surf">${w.map(r=>`<button class="row" type="button" data-mopen="${r.id}"><span class="tx"><b>${r.no} · ${esc(r.client_name||'')}</b><span>${ago(r.updated_at)}</span></span><span class="r">${money(total(r))}<small style="color:${lbl(r)[1]}">${lbl(r)[0]}</small></span></button>`).join('')}</div>`;
+}
+function mmoreHTML(){
+ return `<div class="ptitle" style="margin-top:28px">Ещё</div>
+ <div class="list surf" style="margin-top:22px">${[['march','Архив',`${DB.orders.filter(r=>r.archived).length} ${plural(DB.orders.filter(r=>r.archived).length,'заказ','заказа','заказов')}`,'list'],['mdrafts','Черновики',`${DB.orders.filter(r=>r.pay_status==='draft'&&!r.archived).length} не отправлено`,'cal'],['mtpl','Шаблоны уведомлений','текст для каждого события','chat'],['mvis','Этапы и видимость','какие этапы видит клиент','check'],['mnorms','Нормы сроков','когда этап считать затянувшимся','clock']].map(r=>`<button class="row" type="button" data-mpush="${r[0]}"><span class="th">${I(r[3])}</span><span class="tx"><b>${r[1]}</b><span>${r[2]}</span></span>${I('chev')}</button>`).join('')}</div>
+ <div class="list surf" style="margin-top:8px"><button class="row" type="button" data-role="buyer"><span class="th">${I('user')}</span><span class="tx"><b>Режим покупателя</b><span>как видит клиент</span></span>${I('chev')}</button></div>
+ <div class="tag">Стенд · данные общие для всей команды</div>`;
+}
+const backBtn = () => `<button class="back" type="button" data-back>${I('back')}Назад</button>`;
+function marchHTML(){ const a=DB.orders.filter(r=>r.archived); return `${backBtn()}<div class="ptitle" style="margin-top:18px">Архив</div><div class="psub">Завершённые и отменённые заказы. История сохранена.</div><div class="list surf" style="margin-top:20px">${a.length?a.map(ordRow).join(''):'<div class="sm" style="padding:18px 0;text-align:center">Пусто</div>'}</div>`; }
+function mdraftsHTML(){ const a=DB.orders.filter(r=>r.pay_status==='draft'&&!r.archived); return `${backBtn()}<div class="ptitle" style="margin-top:18px">Черновики</div><div class="psub">Заказы, которые ещё не отправлены клиенту.</div><div class="list surf" style="margin-top:20px">${a.length?a.map(ordRow).join(''):'<div class="sm" style="padding:18px 0;text-align:center">Пусто</div>'}</div>`; }
+function mtplHTML(){ return `${backBtn()}<div class="ptitle" style="margin-top:18px">Шаблоны</div><div class="psub">Одно сообщение на каждое событие. В фигурных скобках — подстановки.</div><div class="list surf" style="margin-top:20px">${NOTIF.map((n,i)=>`<button class="row" type="button" data-sheet="mtpledit" data-ctx="${i}"><span class="tx"><b>${n[0]}</b><span>${n[1]}</span></span>${I('chev')}</button>`).join('')}</div>`; }
+function mvisHTML(){ return `${backBtn()}<div class="ptitle" style="margin-top:18px">Этапы</div><div class="psub">Какие этапы видит клиент и уходит ли сообщение. Список согласуем.</div><div class="list surf" style="margin-top:20px">${STAGES.map((s,i)=>`<div class="row"><span class="tx"><b>${s.t}</b><span>${st.vis[i]?'видит клиент · уведомление':'только для менеджера'}</span></span><button class="tog" type="button" role="switch" aria-checked="${!!st.vis[i]}" data-vis="${i}" aria-label="${s.t}"></button></div>`).join('')}</div>`; }
+function mnormsHTML(){ const DF=[3,5,3,6,3,5,2]; return `${backBtn()}<div class="ptitle" style="margin-top:18px">Нормы</div><div class="psub">Если заказ стоит на этапе дольше нормы, он попадает в «Требует действия».</div><div class="list surf" style="margin-top:20px">${STAGES.slice(0,N-1).map((s,i)=>`<div class="row"><span class="tx"><b>${s.t}</b><span>план ${s.plan}</span></span><span class="stepper"><button type="button" data-norm="${i}:-1" aria-label="Меньше">−</button><b>${st.norm[i]??DF[i]} дн.</b><button type="button" data-norm="${i}:1" aria-label="Больше">+</button></span></div>`).join('')}</div>`; }
+
+/* ================= ШТОРКИ ================= */
+function sheetHTML(kind,data){
+ const msgPrev=(no,txt,extra)=>`<div class="sm" style="margin:12px 2px 4px">Клиент получит в боте:</div><div class="msg"><b>Заказ ${no}</b><br>${txt}${extra?'<br>'+extra:''}<span class="mb">Открыть заказ</span></div>`;
+ const R=(id)=>DB.orders.find(x=>x.id===id);
+ if(kind==='pay'){ const r=R(data); return `<div class="grab"></div><h3>Оплата ${money(total(r))}</h3><div class="sm">Заказ ${r.no}.</div>
+  <div class="card surf" style="margin:0">${(r.items||[]).map(i=>`<div class="pl"><span>${esc(i.n)}</span><b>${money(i.p*i.q)}</b></div><div class="sep"></div>`).join('')}<div class="pl"><span>Доставка до СДЭК</span><b>${money(r.ship)}</b></div></div>
+  <div class="sm" style="margin:12px 2px 0">Откроется страница оплаты банка. На стенде оплата тестовая: деньги не списываются.</div><button class="sbtn" type="button" data-paygo="${data}">Перейти к оплате</button>`; }
+ if(kind==='items'){ const r=R(data), it=r.items||[], n=it.reduce((s,i)=>s+(+i.q||1),0); return `<div class="grab"></div><h3>Состав заказа</h3><div class="sm">${r.no} · ${it.length} ${plural(it.length,'позиция','позиции','позиций')}, ${n} шт. · ${money(total(r))}</div>
+  <div class="list surf" style="padding:2px 14px">${it.map(i=>`<div class="row"><span class="th">${I(iconFor([i]))}</span><span class="tx"><b>${esc(i.n)}</b><span>${esc(i.s||'')} · ${i.q} шт.</span></span><span class="r">${money(i.p*i.q)}</span></div>`).join('')}<div class="row"><span class="th">${I('truck')}</span><span class="tx"><b>Доставка до СДЭК</b><span>до пункта выдачи</span></span><span class="r">${money(r.ship)}</span></div></div>
+  <button class="sbtn" type="button" data-goorder="${data}">Открыть заказ</button>`; }
+ if(kind==='report'){ const r=R(data); return `<div class="grab"></div><h3>Ошибка в данных</h3><div class="sm">Заказ ${r?r.no:''}. Менеджер проверит и исправит.</div>
+  ${['Получатель или телефон','Адрес или пункт выдачи','Состав заказа','Другое'].map((t,i)=>`<button class="opt" type="button" role="radio" aria-checked="${i===0}" data-rep="${t}"><span class="radio"></span><span class="tx"><b>${t}</b></span></button>`).join('')}
+  <label for="repText" style="position:absolute;left:-9999px">Что не так</label><textarea id="repText" placeholder="Что не так? Например: телефон +7 900 …"></textarea><button class="sbtn" type="button" data-repsend="${data}">Отправить менеджеру</button>`; }
+ if(kind==='pickorder') return `<div class="grab"></div><h3>По какому заказу?</h3><div class="list surf" style="padding:2px 14px">${myOrders().filter(r=>!r.archived).map(r=>`<button class="row" type="button" data-pick="${r.id}"><span class="th">${I(iconFor(r.items||[]))}</span><span class="tx"><b>${esc(title(r))}</b><span>${r.no}</span></span></button>`).join('')||'<div class="sm" style="padding:14px 0">Заказов пока нет</div>'}</div>`;
+ if(kind==='bind') return `<div class="grab"></div><h3>Привязать заказ</h3><div class="sm">Введите код из ссылки менеджера. Для теста подойдут DEMO1–DEMO7.</div><label class="field"><span>Код</span><input type="text" id="bindCode" autocapitalize="characters" placeholder="DEMO1"></label><button class="sbtn" type="button" data-binddo>Привязать</button>`;
+ if(kind==='how') return `<div class="grab"></div><h3>Как мы работаем</h3><div class="list surf" style="padding:2px 14px">${[['Заказ','менеджер собирает состав и присылает ссылку'],['Оплата','на странице банка; заказ появится после подтверждения'],['Срок','ожидаемый, около 20 дней; если изменится — напишем'],['Изменения','после оплаты — только через менеджера'],['Отмена','порядок и возврат денег уточняются']].map(r=>`<div class="row" style="align-items:flex-start"><span class="tx"><b>${r[0]}</b><span style="white-space:normal">${r[1]}</span></span></div>`).join('')}</div><button class="sbtn ghost" type="button" data-close>Понятно</button>`;
+ if(kind==='calendar') return `<div class="grab"></div><h3>В календарь телефона</h3><div class="sm">Добавим ожидаемые даты, напомним за день.</div>${myOrders().filter(r=>!r.archived&&!r.cancelled&&!isDone(r)&&r.eta_to).map((r,i)=>`<button class="opt" type="button" role="checkbox" aria-checked="true" data-calopt="${i}"><span class="radio"></span><span class="tx"><b>${esc(title(r))}</b><span>${r.stage===6?'забрать до ':'ожидаем '}${etaText(r)}</span></span></button>`).join('')||'<div class="sm">Нет активных заказов с датой</div>'}<button class="sbtn" type="button" data-caldo>Добавить</button>`;
+ if(kind==='mstage'){ const r=R(data), nx=Math.min(r.stage+1,N-1), needTrack=nx===6&&!r.track;
+  return `<div class="grab"></div><h3>Следующий этап</h3><div class="sm">${r.no} · ${esc(r.client_name||'')}</div>
+  <div class="list surf" style="padding:2px 14px">${[nx,nx+1].filter(i=>i<N).map((i,j)=>`<button class="opt" style="margin:8px 0;background:none;border-color:${j===0?'#fff':'transparent'}" type="button" role="radio" aria-checked="${j===0}" data-nstage="${i}"><span class="radio"></span><span class="tx"><b>${STAGES[i].t}</b><span>${j===0?'следующий по порядку':'перескочить этап'}</span></span></button>`).join('')}</div>
+  ${needTrack?'<label class="field"><span>Трек СДЭК (обязательно для этого этапа)</span><input type="text" placeholder="1 2345 6789 01" id="ntrack"></label>':''}
+  <button class="opt" type="button" role="checkbox" aria-checked="true" data-ntoggle><span class="radio"></span><span class="tx"><b>Уведомить клиента</b><span>одно сообщение в бот</span></span></button>
+  ${msgPrev(r.no,`Новый этап: «${STAGES[nx].t}».`,r.eta_to?`Ожидаемый срок — ${etaText(r)}.`:'')}<button class="sbtn" type="button" data-nstagego="${data}">Перевести и уведомить</button>`; }
+ if(kind==='meta'){ const r=R(data); return `<div class="grab"></div><h3>Срок поставки</h3><div class="sm">${r.no} · сейчас ${etaText(r)}. Старое значение сохранится, клиент получит сообщение.</div>
+  <div class="mstat" style="margin:6px 0 0;grid-template-columns:1fr 1fr"><label class="field" style="margin:0"><span>От</span><input type="date" id="etaFrom" value="${r.eta_from||''}"></label><label class="field" style="margin:0"><span>До</span><input type="date" id="etaTo" value="${r.eta_to||''}"></label></div>
+  <div class="sm" style="margin:14px 2px 6px">Причина (обязательно при переносе)</div>${['Проверка на таможне','Задержка рейса','Выходные в хабе','Другое'].map((t,i)=>`<button class="opt" type="button" role="radio" aria-checked="${i===0}" data-reason="${t}"><span class="radio"></span><span class="tx"><b>${t}</b></span></button>`).join('')}
+  <button class="sbtn" type="button" data-etago="${data}">Сохранить и уведомить</button>`; }
+ if(kind==='mtrack'){ const r=R(data); return `<div class="grab"></div><h3>Трек СДЭК</h3><div class="sm">${r.no} · ${esc(r.client_name||'')}</div><label class="field"><span>Трек-номер</span><input type="text" placeholder="1 2345 6789 01" value="${esc(r.track||'')}" id="ttrack"></label>
+  ${msgPrev(r.no,'Появился трек СДЭК.','Отследить можно на сайте СДЭК.')}<button class="sbtn" type="button" data-trackgo="${data}">Сохранить и уведомить</button>`; }
+ if(kind==='mnote'){ const r=R(data); return `<div class="grab"></div><h3>Комментарии</h3><label class="field"><span>Клиенту (видно в заказе)</span><textarea id="cClient">${esc(r.comment_client||'')}</textarea></label><label class="field"><span>Внутренняя заметка (видите только вы)</span><textarea id="cNote">${esc(r.note_internal||'')}</textarea></label><button class="sbtn" type="button" data-notego="${data}">Сохранить</button>`; }
+ if(kind==='mmore'){ const r=R(data); return `<div class="grab"></div><h3>${r.no}</h3><div class="list surf" style="padding:2px 14px">
+  ${r.pay_status==='draft'?`<button class="row" type="button" data-sendlink="${data}"><span class="tx"><b>Отправить ссылку клиенту</b><span>черновик станет «Ждёт оплаты»</span></span>${I('chev')}</button>`:''}
+  <button class="row" type="button" data-copy="${BOT_APP}?startapp=${r.bind_code}"><span class="tx"><b>Скопировать ссылку для клиента</b><span>код ${r.bind_code}</span></span>${I('copy')}</button>
+  <button class="row" type="button" data-archive="${data}"><span class="tx"><b>${r.archived?'Вернуть из архива':'Архивировать'}</b><span>${r.archived?'снова в рабочем списке':'уберём из рабочего списка'}</span></span>${I('chev')}</button>
+  ${r.cancelled?'':`<button class="row" type="button" data-sheet="mcancel" data-ctx="${data}"><span class="tx"><b style="color:var(--alert)">Отменить заказ</b><span>с подтверждением, клиент получит уведомление</span></span></button>`}</div>`; }
+ if(kind==='mcancel'){ const r=R(data); return `<div class="grab"></div><h3>Отменить заказ?</h3><div class="sm">${r.no} · ${esc(r.client_name||'')} · ${money(total(r))}. ${r.pay_status==='paid'?'Заказ оплачен — оформим возврат.':''} История сохранится.</div>
+  ${msgPrev(r.no,'Заказ отменён.',r.pay_status==='paid'?'Деньги вернём на карту, менеджер напишет детали.':'')}
+  <button class="sbtn" type="button" style="background:var(--alert);color:#fff" data-cancelgo="${data}">Отменить и уведомить</button><button class="sbtn ghost" type="button" data-close>Не отменять</button>`; }
+ if(kind==='mbulk'){ const os=[...st.msel].map(id=>R(id)).filter(Boolean); const ok=os.filter(r=>r.pay_status==='paid'&&!r.cancelled&&r.stage<N-1&&r.stage!==5);
+  return `<div class="grab"></div><h3>Следующий этап</h3><div class="sm">${ok.length} из ${os.length} перейдут дальше${ok.length<os.length?'. Остальные не оплачены, получены или ждут трек СДЭК (переводите по одному)':''}.</div>
+  <div class="list surf" style="padding:2px 14px">${ok.map(r=>`<div class="row"><span class="tx"><b>${r.no} · ${esc(r.client_name||'')}</b><span>${r.stage<0?'до выкупа':STAGES[r.stage].t} → <b style="color:#fff;font-weight:500">${STAGES[r.stage+1].t}</b></span></span></div>`).join('')}</div>
+  <div class="sm" style="margin:12px 2px 0">Каждый клиент получит одно сообщение о новом этапе.</div><button class="sbtn" type="button" data-bulkgo ${ok.length?'':'disabled'}>Перевести ${ok.length} и уведомить</button>`; }
+ if(kind==='additem') return `<div class="grab"></div><h3>Позиция</h3><label class="field"><span>Название</span><input type="text" id="itN" placeholder="iPhone 16 Pro"></label><label class="field"><span>Характеристики</span><input type="text" id="itS" placeholder="256 ГБ, Natural Titanium"></label><div class="mstat" style="margin:10px 0 0;grid-template-columns:1fr 1fr"><label class="field" style="margin:0"><span>Кол-во</span><input type="number" inputmode="numeric" id="itQ" value="1"></label><label class="field" style="margin:0"><span>Цена за шт., ₽</span><input type="number" inputmode="numeric" id="itP" placeholder="109000"></label></div><button class="sbtn" type="button" data-itemadd>Добавить</button>`;
+ if(kind==='mcreated'){ const r=R(data); return `<div class="grab"></div><h3>Заказ создан</h3><div class="sm">${r.no} · ${esc(r.client_name||'')} · ${money(total(r))}</div>
+  <div class="card surf" style="margin:0"><div class="pl"><span>Ссылка для клиента</span><span>код ${r.bind_code}</span></div><div class="trkrow"><span class="trkno" style="font-size:14px">${BOT_APP.replace('https://','')}?startapp=${r.bind_code}</span><button class="icb" type="button" data-copy="${BOT_APP}?startapp=${r.bind_code}" aria-label="Скопировать ссылку">${I('copy')}</button></div></div>
+  <div class="sm" style="margin:12px 2px 0">Клиент открывает ссылку — заказ привязывается к его Telegram и появляется у него сразу.</div>
+  <button class="sbtn" type="button" data-goorderm="${data}">Открыть заказ</button>`; }
+ if(kind==='mtpledit'){ const n=NOTIF[data]; return `<div class="grab"></div><h3>${n[0]}</h3><div class="sm">Подстановки: {no}, {stage}, {eta}, {track}, {until}</div><label for="tplTx" style="position:absolute;left:-9999px">Текст</label><textarea id="tplTx">${n[1]}</textarea><div class="sm" style="margin:12px 2px 4px">Так увидит клиент:</div><div class="msg">${n[1].replace('{no}','<b>MJL-001045</b>').replace('{stage}','Отправлен в Россию').replace('{eta}','18–21 октября').replace('{track}','1 2345 6789 01').replace('{until}','24 октября').replace('{old}','18–21.10').replace('{reason}','проверка на таможне').replace('{refund}','Деньги вернём на карту.')}<span class="mb">Открыть заказ</span></div><button class="sbtn" type="button" data-close data-toast="Шаблон сохранён">Сохранить</button>`; }
+ if(kind==='demo') return `<div class="grab"></div><h3>Стенд</h3><div class="sm">Фон для показа.</div><div class="opts">${Object.entries(BGS).map(([k,v])=>`<button type="button" data-bg="${k}" aria-pressed="${st.bg===k}">${v}</button>`).join('')}</div>`;
+ return '';
+}
+function openSheet(kind,data){ const sh=$('#sheet'); sh.innerHTML=sheetHTML(kind,data); sh.scrollTop=0; $('#scrim').classList.add('on'); requestAnimationFrame(()=>sh.classList.add('on')); haptic('light'); updateChrome(); }
+function closeSheet(){ $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); updateChrome(); }
+const sheetOpen = () => $('#sheet').classList.contains('on');
+
+/* ================= НАВИГАЦИЯ ================= */
+const ROOT = {buyer:[['home','Главная','home'],['catalog','Каталог','grid'],['chat','Менеджер','chat'],['profile','Профиль','user']],
+ manager:[['mtoday','Сегодня','bolt'],['morders','Заказы','list'],['mlinks','Ссылки','link'],['mmore','Ещё','dots']]};
+function render(v){ switch(v.v){
+ case 'home':return homeHTML(); case 'order':return orderHTML(v.k); case 'chat':return chatHTML(); case 'catalog':return catalogHTML(); case 'profile':return profileHTML(); case 'paid':return paidHTML(v.k);
+ case 'mtoday':return todayHTML(); case 'morders':return mordersHTML(); case 'morder':return morderHTML(v.id); case 'mnew':return mnewHTML(); case 'mlinks':return mlinksHTML(); case 'mmore':return mmoreHTML();
+ case 'march':return marchHTML(); case 'mdrafts':return mdraftsHTML(); case 'mtpl':return mtplHTML(); case 'mvis':return mvisHTML(); case 'mnorms':return mnormsHTML(); } return ''; }
+function paidHTML(id){ const r=DB.orders.find(x=>x.id===id)||{};
+ return `<div style="width:72px;height:72px;border-radius:50%;background:#fff;color:#0B0D18;display:grid;place-items:center;margin:56px 18px 0">${I('check')}</div><div class="date long" style="margin-top:22px">Оплата<br>получена</div><div class="psub">${money(total(r))} · заказ ${r.no||''}. Чек и подтверждение придут в чат бота. Выкупим в США в ближайшие дни.</div>
+ <div class="card first surf"><div class="mrow"><span class="th">${I('chat')}</span><div class="tx"><b>Присылать статусы в бот?</b><span>одно сообщение на каждый новый этап</span></div><span class="tog" role="switch" aria-checked="${st.notify}" data-toggle="notify" tabindex="0"></span></div></div>`; }
+function animateIn(el){ if(RM) return; el.classList.add('anim'); [...el.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,12)));
+ el.querySelectorAll('[data-count]').forEach(n=>{ const to=+n.dataset.count, t0=performance.now(), fmt=new Intl.NumberFormat('ru-RU'); const step=(t)=>{ const p=Math.min(1,(t-t0)/650), e=1-Math.pow(1-p,3); n.textContent=fmt.format(Math.round(to*e/100)*100); if(p<1) requestAnimationFrame(step); else n.textContent=fmt.format(to); }; requestAnimationFrame(step); });
+ setTimeout(()=>el.classList.remove('anim'),1600); }
+function mount(v,dir){ const vp=$('#vp'), old=vp.querySelector('.screen:not(.gone)'), el=document.createElement('div'); el.className='screen'; el.innerHTML=render(v);
+ if(dir&&old&&!RM){ el.classList.add(dir==='fwd'?'enter':'back-enter'); vp.appendChild(el); requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.classList.remove('enter','back-enter'); old.classList.add(dir==='fwd'?'leave':'back-leave','gone'); })); setTimeout(()=>old.remove(),340); }
+ else { if(old) old.remove(); vp.appendChild(el); }
+ animateIn(el); updateChrome(); }
+function refresh(){ const sc=$('#vp .screen:not(.gone)'); if(!sc) return; const a=document.activeElement; if(a&&sc.contains(a)&&/INPUT|TEXTAREA/.test(a.tagName)) return; const y=sc.scrollTop; sc.innerHTML=render(cur()); sc.scrollTop=y; renderTabs(); updateChrome(); }
+const cur = () => st.stack[st.stack.length-1];
+function push(v){ st.stack.push(v); mount(v,'fwd'); haptic('light'); }
+function back(){ if(sheetOpen()) return closeSheet(); if(st.stack.length<=1) return; st.stack.pop(); mount(cur(),'back'); haptic('light'); }
+function setTab(t,ctx){ if(sheetOpen()) closeSheet(); if(t!=='morders') st.msel=null; if(t==='morders'&&!st.mfKeep){ st.mf='all'; st.msel=null; } st.mfKeep=false; st.tab=t; if(t==='chat') st.ctx=ctx||null; st.stack=[{v:t}]; mount(cur()); haptic('sel'); renderTabs(); }
+function renderTabs(){ const fl=st.role==='manager'?work().some(r=>flagsOf(r).length):false; $('#tabs').innerHTML=ROOT[st.role].map(t=>`<button type="button" data-tab="${t[0]}" ${st.tab===t[0]?'aria-current="page"':''}>${I(t[2])}${t[1]}${t[0]==='mtoday'&&fl?'<i class="dotn"></i>':''}</button>`).join(''); }
+let mainAction=null;
+function mainFor(v){ if(sheetOpen()) return null;
+ if(v.v==='order'){ const r=DB.orders.find(x=>x.id===v.k); if(!r) return null; if(r.pay_status==='unpaid') return {text:'Перейти к оплате · '+money(total(r)),sheet:'pay',k:v.k}; if(r.track&&r.stage===6) return {text:'Отследить доставку',toast:'Откроется отслеживание на сайте СДЭК'}; return null; }
+ if(v.v==='paid') return {text:'Открыть заказ',paidGo:v.k};
+ if(v.v==='morder'){ const r=DB.orders.find(x=>x.id===v.id); if(!r||r.cancelled||isDone(r)) return null; if(r.pay_status==='draft') return {text:'Отправить ссылку клиенту',sendlink:r.id}; if(r.pay_status!=='paid') return {text:'Напомнить об оплате',remind:r.id}; return {text:'Следующий этап: '+STAGES[r.stage+1].t,sheet:'mstage',k:v.id}; }
+ if(v.v==='mnew') return {text:'Создать заказ и ссылку',create:true};
+ return null; }
+function updateChrome(){ const v=cur(), m=v?mainFor(v):null; mainAction=m; $('#device').classList.toggle('no-tabs', pushed() || (v&&v.v==='paid'));
+ if(inTG){ try{ if(m) tg.MainButton.setParams({text:m.text,color:'#FFFFFF',text_color:'#0B0D18',is_visible:true,is_active:true}); else tg.MainButton.hide(); (st.stack.length>1||sheetOpen())?tg.BackButton.show():tg.BackButton.hide(); }catch(e){} }
+ else { $('#mainbtn').hidden=!m; if(m) $('#mainbtnBtn').textContent=m.text; } }
+let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),2600); }
+function setBg(k){ st.bg=k; ls.set('mj-bg',k); $('#bg').style.backgroundImage=`url(bg-${k}.webp)`; renderSide(); }
+function renderSide(){ const ro=$('#roleOpts'); if(!ro) return; ro.innerHTML=[['buyer','Покупатель'],['manager','Менеджер']].map(([k,t])=>`<button type="button" data-role="${k}" aria-pressed="${st.role===k}">${t}</button>`).join('');
+ $('#bgOpts').innerHTML=Object.entries(BGS).map(([k,v])=>`<button type="button" data-bg="${k}" aria-pressed="${st.bg===k}">${v}</button>`).join('');
+ const so=$('#scnOpts'); if(so) so.innerHTML=`<button type="button" data-sheet="bind">Привязать заказ по коду</button>`; }
+function setRole(r){ st.role=r; ls.set('mj-role',r); st.tab=r==='buyer'?'home':'mtoday'; st.stack=[{v:st.tab}]; if(sheetOpen()) closeSheet(); renderSide(); renderTabs(); mount(cur()); haptic('medium'); }
+function newDraft(){ const t=today0(), a=new Date(t), b=new Date(t); a.setDate(a.getDate()+20); b.setDate(b.getDate()+23); const iso=(d)=>d.toISOString().slice(0,10);
+ let saved=null; try{ saved=JSON.parse(ls.get('mj-draft')||'null'); }catch(e){}
+ return saved || {phone:'',name:'',items:[],ship:3500,from:iso(a),to:iso(b),type:'ПВЗ',addr:'',comment:''}; }
+const saveDraft = () => ls.set('mj-draft', JSON.stringify(st.newo));
+
+/* ================= ДЕЙСТВИЯ ================= */
+async function runMain(){ const m=mainAction; if(!m) return; haptic('medium');
+ if(m.sheet) openSheet(m.sheet,m.k); else if(m.toast) toast(m.toast);
+ else if(m.paidGo){ st.tab='home'; renderTabs(); st.stack=[{v:'home'}]; push({v:'order',k:m.paidGo}); }
+ else if(m.remind) act(()=>addHist(m.remind,'напоминание об оплате отправлено',{notified:true}),'Напоминание отправлено клиенту');
+ else if(m.sendlink) act(()=>Promise.all([patchOrder(m.sendlink,{pay_status:'unpaid'}),addHist(m.sendlink,'ссылка на оплату отправлена клиенту',{notified:true})]),'Ссылка отправлена · заказ ждёт оплаты');
+ else if(m.create){ const o=st.newo; if(!o.items.length){ haptic('warn'); return toast('Добавьте хотя бы одну позицию'); } if(!o.phone||!o.name){ haptic('warn'); return toast('Нужны ФИО и телефон клиента'); }
+  try{ const rows=await api('majlis_orders',{method:'POST',body:JSON.stringify({client_name:o.name,client_phone:o.phone,items:o.items,ship:+o.ship||0,pay_status:'unpaid',eta_from:o.from||null,eta_to:o.to||null,delivery:{type:o.type==='Курьер'?'Курьер СДЭК':'Пункт выдачи СДЭК',name:o.type==='Курьер'?'Курьер':o.addr.split('·')[0].trim(),addr:o.addr,code:(o.addr.split('·')[1]||'').trim()},comment_client:o.comment||null})});
+   const r=rows[0]; await addHist(r.id,'заказ создан, ссылка на оплату отправлена',{notified:true}); ls.set('mj-draft',''); st.newo=null; await load(); haptic('ok'); st.stack=[{v:'mtoday'}]; st.tab='mtoday'; renderTabs(); mount(cur()); openSheet('mcreated',r.id); }
+  catch(e){ haptic('warn'); toast('Не получилось: '+e.message); } }
+}
+async function bind(code, silent){ code=(code||'').trim().toUpperCase(); if(!code) return;
+ try{ const rows=await api(`majlis_orders?bind_code=eq.${encodeURIComponent(code)}`,{method:'PATCH',body:JSON.stringify({tg_user_id:MY_ID})});
+  if(!rows||!rows.length){ if(!silent) toast('Заказ с таким кодом не найден'); return; }
+  await addHist(rows[0].id,'клиент открыл ссылку, Telegram привязан'); await load(); haptic('ok'); toast('Заказ '+rows[0].no+' привязан'); if(st.role!=='buyer') setRole('buyer'); else setTab('home'); }
+ catch(e){ toast('Не получилось привязать: '+e.message); } }
+
+document.addEventListener('click',(e)=>{
+ const b=e.target.closest('button,[data-toggle]'); if(!b) return; const d=b.dataset;
+ if(b.id==='mainbtnBtn') return runMain();
+ if(b.id==='tgClose') return toast('В Telegram здесь закрывается мини-апп');
+ if(b.id==='replayPre') return preload(true);
+ if(d.role) return setRole(d.role);
+ if(d.bg) return setBg(d.bg);
+ if(d.tab) return setTab(d.tab,d.ctx);
+ if(d.mtab) return setTab(d.mtab);
+ if(d.back!==undefined) return back();
+ if(d.open) return push({v:'order',k:d.open});
+ if(d.mopen) return push({v:'morder',id:d.mopen});
+ if(d.mpush) return push({v:d.mpush});
+ if(d.mnew!==undefined){ st.newo=newDraft(); return push({v:'mnew'}); }
+ if(d.sheet) return openSheet(d.sheet,d.ctx);
+ if(d.close!==undefined){ closeSheet(); if(d.toast){ haptic('ok'); toast(d.toast); } return; }
+ if(d.goorder){ closeSheet(); return push({v:'order',k:d.goorder}); }
+ if(d.goorderm){ closeSheet(); return push({v:'morder',id:d.goorderm}); }
+ if(d.site!==undefined){ if(inTG){ try{ tg.openLink('https://majlis-agency.ru/'); return; }catch(_){} } return toast('Откроется каталог на majlis-agency.ru'); }
+ if(d.track!==undefined) return toast('Откроется отслеживание на сайте СДЭК');
+ if(d.copy){ const v=d.copy, done=()=>toast('Скопировано'); try{ navigator.clipboard.writeText(v).then(done,()=>toast(v)); }catch(_){ toast(v); } haptic('light'); return; }
+ if(d.pick){ st.ctx=d.pick; closeSheet(); return refresh(); }
+ if(d.topic){ st.topic = st.topic===d.topic?null:d.topic; haptic('sel'); return refresh(); }
+ if(d.chat!==undefined){ const oid=d.chat||null; return act(()=>api('majlis_requests',{method:'POST',body:JSON.stringify({order_id:oid,kind:'question',topic:st.topic||'Вопрос',body:st.topic?null:'Клиент хочет связаться',tg_user_id:MY_ID})}).then(()=>{ st.topic=null; }),'Анна получила вопрос и ответит в чате'); }
+ if(d.acc){ st.acc[d.acc]=!st.acc[d.acc]; haptic('sel'); return refresh(); }
+ if(d.rail){ st.acc[d.rail+':rail']=true; return push({v:'order',k:d.rail}); }
+ if(d.items) return openSheet('items',d.items);
+ if(d.rep||d.reason||d.nstage!==undefined&&d.nstage!==''){ const key=d.rep?'rep':d.reason?'reason':'nstage'; document.querySelectorAll(`[data-${key}]`).forEach(x=>{ x.setAttribute('aria-checked',x===b); if(key==='nstage') x.style.borderColor=x===b?'#fff':'transparent'; }); haptic('sel'); return; }
+ if(d.calopt||d.ntoggle!==undefined){ b.setAttribute('aria-checked', b.getAttribute('aria-checked')!=='true'); haptic('sel'); return; }
+ if(d.repsend){ const topic=(document.querySelector('[data-rep][aria-checked="true"]')||{}).dataset?.rep||'Другое', body=($('#repText')||{}).value||''; closeSheet(); return act(()=>api('majlis_requests',{method:'POST',body:JSON.stringify({order_id:d.repsend,kind:'error',topic,body,tg_user_id:MY_ID})}),'Отправили менеджеру. Ответ придёт в чат бота'); }
+ if(d.caldo!==undefined){ closeSheet(); haptic('ok'); return toast('Добавили в календарь, напомним за день'); }
+ if(d.binddo!==undefined){ const c=($('#bindCode')||{}).value; closeSheet(); return bind(c); }
+ if(d.toggle==='notify'){ st.notify=!st.notify; document.querySelectorAll('[data-toggle="notify"] .tog,.tog[data-toggle="notify"]').forEach(x=>x.setAttribute('aria-checked',st.notify)); haptic('sel'); return; }
+ if(d.toggle==='haptic'){ st.hapticOn = st.hapticOn===false; ls.set('mj-haptic',st.hapticOn?'1':'0'); b.querySelector('.tog').setAttribute('aria-checked', st.hapticOn!==false); haptic('sel'); return; }
+ if(d.paygo){ const id=d.paygo; closeSheet(); toast('Тестовая оплата: банк подтверждает');
+  return act(async()=>{ await patchOrder(id,{pay_status:'checking'}); await load(); refresh(); await new Promise(r=>setTimeout(r,2600)); await patchOrder(id,{pay_status:'paid',paid_at:new Date().toISOString()}); await addHist(id,'оплата подтверждена (тестовая)',{who:'Система',notified:true}); st.stack=[{v:'paid',k:id}]; await load(); mount(cur(),'fwd'); }); }
+ /* менеджер */
+ if(d.sync!==undefined) return sync(()=>{ refresh(); toast('Обновлено'); });
+ if(d.mf){ st.mf=d.mf; haptic('sel'); return refresh(); }
+ if(d.pipe!==undefined){ st.mf= +d.pipe<0?'unpaid':'st:'+d.pipe; st.mfKeep=true; return setTab('morders'); }
+ if(d.mselect!==undefined){ st.msel = st.msel?null:new Set(); haptic('sel'); return refresh(); }
+ if(d.msel){ st.msel.has(d.msel)?st.msel.delete(d.msel):st.msel.add(d.msel); haptic('sel'); return refresh(); }
+ if(d.bulkgo!==undefined){ const os=[...st.msel].map(id=>DB.orders.find(x=>x.id===id)).filter(r=>r&&r.pay_status==='paid'&&!r.cancelled&&r.stage<N-1&&r.stage!==5); closeSheet(); st.msel=null;
+  return act(()=>Promise.all(os.map(r=>Promise.all([patchOrder(r.id,{stage:r.stage+1}),addHist(r.id,'этап → «'+STAGES[r.stage+1].t+'»',{stage:r.stage+1,notified:true})]))),`${os.length} ${plural(os.length,'заказ','заказа','заказов')} → следующий этап · клиенты уведомлены`); }
+ if(d.fix){ const [f,id]=d.fix.split(':'); if(f==='over') return openSheet('meta',id); if(f==='notrack') return openSheet('mtrack',id); if(f==='question') return push({v:'morder',id});
+  if(f==='unpaid') return act(()=>addHist(id,'напоминание об оплате отправлено',{notified:true}),'Напоминание отправлено в бот'); }
+ if(d.resolve) return act(()=>api(`majlis_requests?id=eq.${d.resolve}`,{method:'PATCH',body:JSON.stringify({resolved:true})}),'Отмечено как решённое');
+ if(d.markpaid) return act(()=>Promise.all([patchOrder(d.markpaid,{pay_status:'paid',paid_at:new Date().toISOString()}),addHist(d.markpaid,'оплата подтверждена вручную (тест)',{notified:true})]),'Оплата отмечена · клиент уведомлён');
+ if(d.nstagego){ const id=d.nstagego, r=DB.orders.find(x=>x.id===id); const sel=document.querySelector('[data-nstage][aria-checked="true"]'); const s=sel?+sel.dataset.nstage:r.stage+1; const tr=(($('#ntrack')||{}).value||'').trim();
+  if(s>=6 && !r.track && !tr){ haptic('warn'); return toast('Для этапа «Передан в СДЭК» нужен трек'); }
+  const notify=(document.querySelector('[data-ntoggle]')||{}).getAttribute?.('aria-checked')!=='false'; closeSheet();
+  return act(()=>Promise.all([patchOrder(id,Object.assign({stage:s},tr?{track:tr}:{})),addHist(id,'этап → «'+STAGES[s].t+'»',{stage:s,notified:notify})]),'Этап обновлён'+(notify?' · клиент уведомлён':'')); }
+ if(d.etago){ const id=d.etago, r=DB.orders.find(x=>x.id===id), a=($('#etaFrom')||{}).value, z=($('#etaTo')||{}).value; const reason=(document.querySelector('[data-reason][aria-checked="true"]')||{}).dataset?.reason||'';
+  if(!z){ haptic('warn'); return toast('Укажите дату «до»'); } closeSheet(); const moved = r.eta_to && z!==r.eta_to;
+  return act(()=>Promise.all([patchOrder(id,Object.assign({eta_from:a||null,eta_to:z},moved?{eta_prev:etaShort(r),delay_reason:reason}:{})),addHist(id,`срок → ${a?dd(D(a))+'–':''}${dd(D(z))}${moved?' (было '+etaShort(r)+'), причина: '+reason.toLowerCase():''}`,{notified:true})]),'Срок сохранён · клиент уведомлён'); }
+ if(d.trackgo){ const id=d.trackgo, v=(($('#ttrack')||{}).value||'').trim(); if(!v){ haptic('warn'); return toast('Введите трек-номер'); } closeSheet();
+  return act(()=>Promise.all([patchOrder(id,{track:v}),addHist(id,'трек СДЭК: '+v,{notified:true})]),'Трек сохранён · клиент уведомлён'); }
+ if(d.notego){ const id=d.notego, c=($('#cClient')||{}).value.trim(), n=($('#cNote')||{}).value.trim(); closeSheet(); return act(()=>Promise.all([patchOrder(id,{comment_client:c||null,note_internal:n||null}),addHist(id,'комментарии обновлены')]),'Сохранено'); }
+ if(d.cancelgo){ const id=d.cancelgo, r=DB.orders.find(x=>x.id===id); closeSheet(); return act(()=>Promise.all([patchOrder(id,Object.assign({cancelled:true},r.pay_status==='paid'?{pay_status:'refund'}:{})),addHist(id,'заказ отменён'+(r.pay_status==='paid'?', оформлен возврат':''),{notified:true})]),'Заказ отменён · клиент уведомлён'); }
+ if(d.archive){ const id=d.archive, r=DB.orders.find(x=>x.id===id); closeSheet(); return act(()=>Promise.all([patchOrder(id,{archived:!r.archived}),addHist(id,r.archived?'возвращён из архива':'перенесён в архив')]),r.archived?'Вернули в работу':'В архиве'); }
+ if(d.sendlink){ closeSheet(); return act(()=>Promise.all([patchOrder(d.sendlink,{pay_status:'unpaid'}),addHist(d.sendlink,'ссылка на оплату отправлена клиенту',{notified:true})]),'Ссылка отправлена'); }
+ if(d.itemadd!==undefined){ const n=($('#itN').value||'').trim(), s=($('#itS').value||'').trim(), q=+($('#itQ').value||1), p=+($('#itP').value||0); if(!n||!p){ haptic('warn'); return toast('Нужны название и цена'); } st.newo.items.push({n,s,q:q||1,p}); saveDraft(); closeSheet(); haptic('sel'); return refresh(); }
+ if(d.delitem!==undefined){ st.newo.items.splice(+d.delitem,1); saveDraft(); haptic('sel'); return refresh(); }
+ if(d.ntype){ st.newo.type=d.ntype; saveDraft(); haptic('sel'); return refresh(); }
+ if(d.vis!==undefined){ st.vis[d.vis]=!st.vis[d.vis]; haptic('sel'); return refresh(); }
+ if(d.norm){ const [i,dl]=d.norm.split(':').map(Number), DF=[3,5,3,6,3,5,2]; st.norm[i]=Math.max(1,(st.norm[i]??DF[i])+dl); haptic('sel'); return refresh(); }
+ if(d.toast){ haptic('light'); return toast(d.toast); }
+});
+document.addEventListener('input',(e)=>{
+ const t=e.target;
+ if(t.id==='msrch'){ const q=t.value.toLowerCase().trim(); document.querySelectorAll('.screen:not(.gone) .ord').forEach(r=>{ r.hidden = q && !r.textContent.toLowerCase().includes(q); }); }
+ if(t.dataset.nf && st.newo){ st.newo[t.dataset.nf]=t.value; saveDraft(); }
+});
+document.addEventListener('change',(e)=>{ if(e.target.dataset.nf==='phone' && st.newo) refresh(); });
+$('#scrim').addEventListener('click',closeSheet);
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') back(); });
+if(inTG){ tg.MainButton.onClick(runMain); tg.BackButton.onClick(back); }
+
+/* ================= ЗАСТАВКА ================= */
+function preload(force){
+ const pre=$('#pre'); if(!pre || RM || (!force && ss.get('mj-pre'))) return;
+ ss.set('mj-pre','1'); pre.hidden=false; pre.classList.remove('out','play'); void pre.offsetWidth; pre.classList.add('play');
+ const cv=$('#preCv'), dpr=Math.min(window.devicePixelRatio||1,2), W=pre.clientWidth, H=pre.clientHeight;
+ cv.width=W*dpr; cv.height=H*dpr; const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
+ const bgc=document.createElement('canvas'); bgc.width=W*dpr; bgc.height=H*dpr; const b=bgc.getContext('2d'); b.setTransform(dpr,0,0,dpr,0,0);
+ const base=b.createLinearGradient(0,0,0,H); base.addColorStop(0,'#0B0D16'); base.addColorStop(1,'#05060A'); b.fillStyle=base; b.fillRect(0,0,W,H);
+ const ax=W*0.18, ay=-H*0.05, ang=Math.atan2(H*0.9, W*0.55);
+ for(const [len,wid,al] of [[H*1.15,W*0.6,.15],[H*0.95,W*0.34,.16],[H*0.65,W*0.17,.20]]){ b.save(); b.translate(ax,ay); b.rotate(ang-Math.PI/2); b.scale(wid/len,1); const g=b.createRadialGradient(0,0,0,0,0,len); g.addColorStop(0,`rgba(214,224,255,${al})`); g.addColorStop(.5,`rgba(150,170,255,${al*.45})`); g.addColorStop(1,'rgba(120,140,255,0)'); b.fillStyle=g; b.beginPath(); b.arc(0,0,len,0,Math.PI*2); b.fill(); b.restore(); }
+ const vig=b.createRadialGradient(W/2,H/2,H*.2,W/2,H/2,H*.75); vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,.55)'); b.fillStyle=vig; b.fillRect(0,0,W,H);
+ const sprite=(r,soft)=>{ const s=document.createElement('canvas'), dd2=Math.ceil(r*2*dpr)+2; s.width=s.height=dd2; const x=s.getContext('2d'), g=x.createRadialGradient(dd2/2,dd2/2,0,dd2/2,dd2/2,dd2/2); g.addColorStop(0,'rgba(255,248,236,1)'); g.addColorStop(soft?.35:.5,soft?'rgba(255,240,220,.35)':'rgba(255,245,230,.6)'); g.addColorStop(1,'rgba(255,240,220,0)'); x.fillStyle=g; x.fillRect(0,0,dd2,dd2); return s; };
+ const sharp=sprite(2,false), bokeh=sprite(9,true);
+ const inBeam=(x,y)=>{ const dx=x-ax, dy=y-ay, t=(dx*Math.cos(ang)+dy*Math.sin(ang)), of=Math.abs(-dx*Math.sin(ang)+dy*Math.cos(ang)); return t>0?Math.max(0,1-of/(W*0.28+t*0.12)):0; };
+ const P=Array.from({length:150},()=>{ const soft=Math.random()<.14; return {x:Math.random()*W,y:Math.random()*H,z:Math.random(),soft,r:soft?4+Math.random()*7:0.5+Math.random()*1.6,vy:-(4+Math.random()*10),vx:(Math.random()-.5)*4,ph:Math.random()*6.28}; });
+ let t0=performance.now(), last=t0, done=false; pre.onclick=()=>{ done=true; finish(); };
+ function finish(){ pre.classList.add('out'); setTimeout(()=>{ pre.hidden=true; pre.classList.remove('play'); },480); }
+ function frame(t){ if(done) return; const el=t-t0, dt=Math.min(.05,(t-last)/1000); last=t; c.globalAlpha=Math.min(1,el/400); c.drawImage(bgc,0,0,W,H);
+  for(const p of P){ p.y+=p.vy*dt*(0.4+p.z); p.x+=p.vx*dt+Math.sin(el/1400+p.ph)*0.08; if(p.y<-20){p.y=H+20;p.x=Math.random()*W;} const lit=0.18+0.82*inBeam(p.x,p.y), tw=0.6+0.4*Math.sin(el/700+p.ph*3); c.globalAlpha=Math.min(1,el/600)*lit*tw*(p.soft?.55:.95); const s=p.soft?bokeh:sharp, d2=p.r*2; c.drawImage(s,p.x-p.r,p.y-p.r,d2,d2); }
+  c.globalAlpha=1; if(el<3000) requestAnimationFrame(frame); else finish(); }
+ requestAnimationFrame(frame);
+}
+
+/* ================= СТАРТ ================= */
+renderSide(); renderTabs(); setBg(st.bg);
+$('#vp').innerHTML='<div class="screen"><div class="spin" role="status" aria-label="Загрузка" style="margin:120px auto 0"></div></div>';
+preload(false);
+(async()=>{
+ try{ await load(); }catch(e){ online=false; }
+ const sp = (inTG && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get('startapp') || '';
+ st.stack=[{v:st.tab}]; renderTabs(); mount(cur());
+ if(!online) toast('Нет связи с базой. Проверьте интернет');
+ if(sp) bind(sp, true);
+ setInterval(()=>{ if(document.visibilityState==='visible' && !sheetOpen()) sync((ch)=>{ if(ch) refresh(); }); }, POLL_MS);
+ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') sync((ch)=>{ if(ch) refresh(); }); });
+})();
+})();
+
+</script>
+</body>
+</html>
